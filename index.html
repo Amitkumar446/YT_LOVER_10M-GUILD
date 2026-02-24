@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT LOVER 10M | Esports Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #03050a; --bg-sidebar: #06080f; --bg-card: rgba(12, 15, 25, 0.7);
+            --border-color: rgba(0, 243, 255, 0.15);
+            --primary: #00f3ff; --primary-glow: rgba(0, 243, 255, 0.6);
+            --accent: #d400ff; --accent-glow: rgba(212, 0, 255, 0.6);
+            --admin-color: #ff0055; --admin-glow: rgba(255, 0, 85, 0.6);
+            --success: #00ff88;
+            --warning: #ffb700;
+            --text-main: #ffffff; --text-muted: #8b95a5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Rajdhani', sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+        .font-display { font-family: 'Orbitron', monospace; }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .bg-mesh { position: fixed; width: 100%; height: 100%; background: radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.05), transparent 50%), radial-gradient(circle at 90% 80%, rgba(212, 0, 255, 0.05), transparent 50%); z-index: 1; pointer-events: none; }
+
+        .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: rgba(6, 8, 15, 0.95); border-right: 1px solid var(--border-color); z-index: 100; display: flex; flex-direction: column; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .brand-area { padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
+        .brand-logo { width: 45px; height: 45px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #000; box-shadow: 0 0 20px var(--primary-glow); }
+        .brand-text h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.5px; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1; }
+        .brand-text span { font-size: 0.65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+
+        .nav-menu { flex: 1; padding: 20px 12px; overflow-y: auto; }
+        .nav-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 12px 16px 8px; font-weight: 700; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; cursor: pointer; color: var(--text-muted); margin-bottom: 4px; transition: all 0.2s; font-weight: 600; font-size: 0.9rem; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.03); color: #fff; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(0, 243, 255, 0.1), transparent); color: var(--primary); border-left: 3px solid var(--primary); }
+        
+        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border-color); display:grid; gap:8px; }
+        
+        .btn-interact { position: relative; overflow: hidden; transition: all 0.2s; cursor: pointer; border: none; }
+        .ripple { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.4); transform: scale(0); animation: ripple-effect 0.6s linear; pointer-events: none; }
+        @keyframes ripple-effect { to { transform: scale(4); opacity: 0; } }
+
+        .main-content { margin-left: 260px; min-height: 100vh; position: relative; z-index: 10; }
+        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } }
+
+        .header { padding: 16px 32px; background: rgba(6, 8, 15, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .page-title { font-size: 1.2rem; font-weight: 700; color: #fff; }
+
+        .card-pro { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; backdrop-filter: blur(20px); transition: all 0.3s; overflow: hidden; }
+        .card-header-pro { padding: 18px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); }
+        .card-title-pro { font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .card-body-pro { padding: 20px; }
+
+        .btn-primary-pro { background: linear-gradient(135deg, var(--primary), #00b8d4); color: #000; padding: 10px 20px; border-radius: 8px; font-weight: 700; text-transform: uppercase; box-shadow: 0 4px 15px var(--primary-glow); }
+        .btn-danger-pro { background: linear-gradient(135deg, var(--admin-color), #b3003b); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 700; border: none; box-shadow: 0 4px 15px var(--admin-glow); }
+        
+        .form-input-pro { width: 100%; padding: 12px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 0.95rem; }
+        .form-input-pro:focus { outline: none; border-color: var(--primary); }
+        .form-label-pro { display: block; font-size: 0.8rem; font-weight: 600; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; }
+
+        /* Password Field Wrapper Style */
+        .pass-wrapper { position: relative; width: 100%; }
+        .pass-wrapper input { padding-right: 45px; } /* Space for icon */
+        .pass-toggle-btn { 
+            position: absolute; 
+            right: 12px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: none; 
+            border: none; 
+            color: var(--text-muted); 
+            cursor: pointer; 
+            font-size: 1.1rem; 
+            transition: color 0.2s;
+        }
+        .pass-toggle-btn:hover { color: var(--primary); }
+
+        .player-card-live { width: 100%; max-width: 380px; margin: 0 auto; background: #050810; border-radius: 16px; overflow: hidden; border: 2px solid var(--primary); box-shadow: 0 0 30px var(--primary-glow); position: relative; }
+        .card-bg-art { height: 120px; background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); position: relative; }
+        .card-avatar-cont { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary); overflow: hidden; background: #000; box-shadow: 0 0 15px var(--primary-glow); display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .card-avatar-cont img { width: 100%; height: 100%; object-fit: cover; }
+
+        .page { display: none; padding: 32px; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .modal-pro { background: #080b14; border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+        .admin-table td { padding: 10px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+
+        .error-box { background: rgba(255, 0, 85, 0.1); border: 1px solid var(--admin-color); border-radius: 8px; padding: 15px; margin-bottom: 15px; color: var(--admin-color); font-weight: 600; }
+        .user-logged-in { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: rgba(0, 255, 136, 0.1); border-radius: 8px; border: 1px solid var(--success); }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="bg-mesh"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand-area">
+            <div class="brand-logo font-display"><i class="fas fa-bolt"></i></div>
+            <div class="brand-text">
+                <h1 class="font-display">YT LOVER</h1>
+                <span>10M Esports</span>
+            </div>
+        </div>
+        
+        <nav class="nav-menu">
+            <div class="nav-label">Main</div>
+            <div class="nav-item active" data-page="dashboard"><i class="fas fa-home"></i><span>Dashboard</span></div>
+            <div class="nav-item" data-page="player-card"><i class="fas fa-id-card"></i><span>Player Card</span></div>
+            <div class="nav-item" data-page="community"><i class="fas fa-users"></i><span>Community</span></div>
+            <div class="nav-item" data-page="matches"><i class="fas fa-gamepad"></i><span>Matches</span></div>
+            
+            <div class="nav-label">Events</div>
+            <div class="nav-item" data-page="teams"><i class="fas fa-users-cog"></i><span>Teams List</span></div>
+            <div class="nav-item" data-page="tournament"><i class="fas fa-trophy"></i><span>Tournament</span></div>
+            <div class="nav-item" data-page="glory"><i class="fas fa-images"></i><span>Glory</span></div>
+            <div class="nav-item" data-page="attendance"><i class="fas fa-calendar-check"></i><span>Attendance</span></div>
+            <div class="nav-item" data-page="chat"><i class="fas fa-comments"></i><span>Chat</span></div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-interact btn-primary-pro" style="width:100%; padding:10px;" id="authBtn" onclick="openAuthModal()"><i class="fas fa-sign-in-alt"></i> <span id="authText">Login</span></button>
+            <button class="btn-interact" style="width:100%; padding:10px; background:transparent; border:1px solid var(--admin-color); color:var(--admin-color); font-weight:600;" id="adminBtn"><i class="fas fa-cog"></i> Admin</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="header">
+            <button id="mobileToggle" style="display:none; background:none; border:none; color:white; font-size:1.5rem;"><i class="fas fa-bars"></i></button>
+            <h1 class="page-title" id="pageTitle">DASHBOARD</h1>
+            <div id="userProfileArea" style="display:none;" class="user-logged-in">
+                <img id="navAvatar" src="https://via.placeholder.com/30" style="width:30px; height:30px; border-radius:50%;">
+                <span id="navName">Player</span>
+            </div>
+        </header>
+
+        <!-- Dashboard -->
+        <section class="page active" id="page-dashboard">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin-bottom:32px;">
+                <div class="card-pro" style="padding:20px; border-left:4px solid var(--primary);"><div style="font-size:2.2rem; font-weight:800;" id="statPlayers">0</div><div style="color:var(--text-muted);">Players</div></div>
+                <div class="card-pro" style="padding:20px; border-left:4px solid var(--accent);"><div style="font-size:2.2rem; font-weight:800;" id="statMatches">0</div><div style="color:var(--text-muted);">Matches</div></div>
+                <div class="card-pro" style="padding:20px; border-left:4px solid var(--admin-color);"><div style="font-size:2.2rem; font-weight:800;" id="statTeams">0</div><div style="color:var(--text-muted);">Teams</div></div>
+            </div>
+            <div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Recent Activity</h3></div><div class="card-body-pro">Welcome to YT LOVER 10M Portal.</div></div>
+        </section>
+
+        <!-- Player Card Page (Registration) -->
+        <section class="page" id="page-player-card">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:32px; align-items:start;">
+                <div class="card-pro">
+                    <div class="card-header-pro"><h3 class="card-title-pro">Create Profile</h3></div>
+                    <div class="card-body-pro">
+                        <div id="errorBox" class="error-box" style="display:none;"><i class="fas fa-exclamation-triangle"></i> <span id="errorText"></span></div>
+                        
+                        <form id="playerForm">
+                            <div style="text-align:center; margin-bottom:20px;">
+                                <label class="btn-interact" style="cursor:pointer;">
+                                    <img id="avatarPreviewImg" src="https://via.placeholder.com/100/020205/00f3ff?text=ADD" style="width:100px; height:100px; border-radius:50%; border:2px solid var(--primary);">
+                                    <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+                                </label>
+                            </div>
+                            <div style="display:grid; gap:16px;">
+                                <input type="text" class="form-input-pro" id="playerName" placeholder="Player Name" required>
+                                <input type="text" class="form-input-pro" id="playerUid" placeholder="Game UID" required>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                                    <input type="number" step="0.01" class="form-input-pro" id="playerKd" placeholder="K/D Ratio" required>
+                                    <input type="number" class="form-input-pro" id="playerAct" placeholder="ACT Score" required>
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                                    <input type="number" class="form-input-pro" id="playerHs" placeholder="Headshot %" required>
+                                    <select class="form-input-pro" id="playerRole"><option>Assaulter</option><option>Sniper</option><option>Support</option><option>IGL</option></select>
+                                </div>
+                                
+                                <!-- PASSWORD FIELD WITH TOGGLE -->
+                                <div class="pass-wrapper">
+                                    <input type="password" class="form-input-pro" id="playerPass" placeholder="Create Password" required>
+                                    <button type="button" class="pass-toggle-btn" onclick="togglePassword('playerPass', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                
+                            </div>
+                            <button type="submit" class="btn-interact btn-primary-pro" style="width:100%; margin-top:20px;" id="registerBtn">Save Profile</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Preview -->
+                <div style="position:sticky; top:100px;">
+                    <div class="player-card-live" id="playerCardPreview">
+                        <div class="card-bg-art"></div>
+                        <div class="card-avatar-cont" id="cardAvatar"><i class="fas fa-user" style="color:#333; font-size:2rem;"></i></div>
+                        <div style="padding:60px 20px 20px; text-align:center;">
+                            <div style="font-size:1.6rem; font-weight:700;" id="cardName">PLAYER NAME</div>
+                            <div style="color:var(--accent); font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:0.8rem;" id="cardRole">ROLE</div>
+                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; border-top:1px solid var(--border-color); padding-top:20px; margin-top:20px;">
+                                <div><div style="font-size:1.2rem; color:var(--primary); font-weight:700;" id="cardKd">0.00</div><span style="font-size:0.65rem; color:var(--text-muted);">K/D</span></div>
+                                <div><div style="font-size:1.2rem; color:var(--primary); font-weight:700;" id="cardAct">0</div><span style="font-size:0.65rem; color:var(--text-muted);">ACT</span></div>
+                                <div><div style="font-size:1.2rem; color:var(--primary); font-weight:700;" id="cardHs">0%</div><span style="font-size:0.65rem; color:var(--text-muted);">HS%</span></div>
+                            </div>
+                        </div>
+                        <div style="padding:10px; background:rgba(0,0,0,0.2); text-align:center; font-size:0.7rem; color:var(--text-muted);">YT LOVER 10M | UID: <span id="cardUid">0000</span></div>
+                    </div>
+                    <button class="btn-interact btn-primary-pro" style="width:100%; margin-top:16px;" onclick="downloadCard()"><i class="fas fa-download"></i> Download Card</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Other Pages -->
+        <section class="page" id="page-community"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Community Members</h3></div><div class="card-body-pro" id="playerListContainer" style="max-height:70vh; overflow-y:auto;"></div></div></section>
+        <section class="page" id="page-matches"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Battle Arena</h3></div><div class="card-body-pro" id="matchesListContainer"></div></div></section>
+        <section class="page" id="page-teams"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Tournament Teams</h3></div><div class="card-body-pro" id="teamListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:16px;"></div></div></section>
+        <section class="page" id="page-tournament"><div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Slots (<span id="slotsFilled">0</span>/24)</h3></div><div class="card-body-pro" id="slotsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:12px;"></div></div><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Register Team</h3></div><div class="card-body-pro"><form id="tournamentForm" style="display:grid; gap:12px;"><input type="text" class="form-input-pro" id="teamName" placeholder="Team Name" required><input type="text" class="form-input-pro" id="uid1" placeholder="P1 UID" required><input type="text" class="form-input-pro" id="uid2" placeholder="P2 UID" required><input type="text" class="form-input-pro" id="uid3" placeholder="P3 UID" required><input type="text" class="form-input-pro" id="uid4" placeholder="P4 UID" required><button class="btn-interact btn-primary-pro">Register</button></form></div></div></div></section>
+        <section class="page" id="page-glory"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Upload Screenshot</h3></div><div class="card-body-pro"><div class="btn-interact form-input-pro" id="fileUpload" style="text-align:center; cursor:pointer; border-style:dashed;"><i class="fas fa-cloud-upload-alt" style="font-size:2rem; color:var(--primary); margin-bottom:10px;"></i><p>Click to Upload Image</p><input type="file" id="screenshotInput" accept="image/*" style="display:none;"></div></div></div><div class="card-pro" style="margin-top:24px;"><div class="card-header-pro"><h3 class="card-title-pro">Gallery</h3></div><div class="card-body-pro" id="screenshotGallery" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px;"></div></div></section>
+        <section class="page" id="page-attendance"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Attendance</h3></div><div class="card-body-pro"><select class="form-input-pro" id="attendancePlayer" style="max-width:300px; margin-bottom:10px;"></select><button class="btn-interact btn-primary-pro" id="checkInBtn">Check In</button><div id="attendanceGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px,1fr)); gap:10px; margin-top:20px;"></div></div></div></section>
+        <section class="page" id="page-chat"><div class="card-pro" style="height:500px; display:flex; flex-direction:column;"><div class="card-header-pro"><h3 class="card-title-pro">Chat</h3></div><div id="chatMessages" style="flex:1; overflow-y:auto; padding:20px;"></div><div style="padding:16px; display:flex; gap:10px;"><input type="text" class="form-input-pro" id="chatMsg" placeholder="Message..."><button class="btn-interact btn-primary-pro" id="sendChatBtn"><i class="fas fa-paper-plane"></i></button></div></div></section>
+    </main>
+
+    <!-- Auth Modal -->
+    <div id="authModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:none; align-items:center; justify-content:center;">
+        <div class="modal-pro">
+            <div class="card-header-pro">
+                <h3 style="font-weight:700; color:var(--primary);" id="authModalTitle">Login</h3>
+                <button class="btn-interact" style="background:none; border:none; color:white; font-size:1.5rem;" onclick="closeAuthModal()">&times;</button>
+            </div>
+            <div style="padding:20px;">
+                <div id="loginForm">
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label-pro">UID</label>
+                        <input type="text" class="form-input-pro" id="loginUid" placeholder="Enter your UID">
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <label class="form-label-pro">Password</label>
+                        <!-- LOGIN PASSWORD FIELD WITH TOGGLE -->
+                        <div class="pass-wrapper">
+                            <input type="password" class="form-input-pro" id="loginPass" placeholder="Enter Password">
+                            <button type="button" class="pass-toggle-btn" onclick="togglePassword('loginPass', this)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn-interact btn-primary-pro" style="width:100%;" id="loginSubmitBtn" onclick="handleLogin()">Login</button>
+                    <p style="text-align:center; margin-top:12px; color:var(--text-muted);">No account? <a href="#" onclick="toggleAuthForm('register')" style="color:var(--accent); cursor:pointer;">Register</a></p>
+                </div>
+                <div id="registerForm" style="display:none;">
+                    <p style="margin-bottom:10px; color:var(--text-muted);">Create your player profile first</p>
+                    <button class="btn-interact btn-primary-pro" style="width:100%;" onclick="closeAuthModal(); document.querySelector('[data-page=\'player-card\']').click();">Go to Registration Form</button>
+                    <p style="text-align:center; margin-top:12px; color:var(--text-muted);">Have account? <a href="#" onclick="toggleAuthForm('login')" style="color:var(--primary); cursor:pointer;">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:300; display:none; align-items:center; justify-content:center;"><div class="modal-pro" style="max-width:900px; width:95%; height:90vh; display:flex; flex-direction:column;"><div class="card-header-pro" style="border-color:var(--admin-color);"><h3 style="font-weight:700; color:var(--admin-color);"><i class="fas fa-shield-alt"></i> Admin Control Panel</h3><button class="btn-interact" style="background:none; border:none; color:white; font-size:1.5rem;" onclick="closeAdminModal()">&times;</button></div><div style="flex:1; overflow-y:auto; padding:20px;"><div id="adminLoginSection"><div style="max-width:350px; margin:50px auto;"><label class="form-label-pro" style="color:var(--admin-color);">Admin Password</label><input type="password" class="form-input-pro" id="adminPassInput" style="border-color:var(--admin-color);" placeholder="Enter Admin Password"><button class="btn-interact btn-danger-pro" style="width:100%; margin-top:15px;" onclick="adminLogin()"><i class="fas fa-unlock"></i> Access Admin Panel</button></div></div><div id="adminControlSection" style="display:none;"><div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:15px; flex-wrap:wrap;"><button class="btn-interact admin-tab-btn active" onclick="switchAdminTab('users')" data-tab="users" style="background:var(--admin-color); color:white; padding:8px 16px; border-radius:6px;"><i class="fas fa-users"></i> Players</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('matches')" data-tab="matches" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:8px 16px; border-radius:6px;"><i class="fas fa-gamepad"></i> Matches</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('blacklist')" data-tab="blacklist" style="background:transparent; border:1px solid var(--warning); color:var(--warning); padding:8px 16px; border-radius:6px;"><i class="fas fa-ban"></i> Blacklist</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('system')" data-tab="system" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:8px 16px; border-radius:6px;"><i class="fas fa-cogs"></i> System</button></div><div id="adminTabUsers" class="admin-tab-content"><div class="card-pro" style="background:rgba(0,0,0,0.2);"><div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>Name</th><th>UID</th><th>Action</th></tr></thead><tbody id="adminUserList"></tbody></table></div></div></div><div id="adminTabMatches" class="admin-tab-content" style="display:none;"><div class="card-pro" style="background:rgba(0,0,0,0.2); padding:16px; margin-bottom:16px;"><h4 style="color:var(--primary); margin-bottom:12px;"><i class="fas fa-plus-circle"></i> Schedule Match</h4><div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><input type="text" class="form-input-pro" id="matchTeamA" placeholder="Team A Name"><input type="text" class="form-input-pro" id="matchTeamB" placeholder="Team B Name"></div><div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px;"><input type="text" class="form-input-pro" id="matchTime" placeholder="Time"><input type="number" class="form-input-pro" id="matchScoreA" placeholder="Score A"><input type="number" class="form-input-pro" id="matchScoreB" placeholder="Score B"></div><button class="btn-interact btn-primary-pro" style="width:100%; margin-top:12px;" onclick="addMatch()"><i class="fas fa-plus"></i> Add Match</button></div><div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>Match</th><th>Score</th><th>Action</th></tr></thead><tbody id="adminMatchList"></tbody></table></div></div><div id="adminTabBlacklist" class="admin-tab-content" style="display:none;"><div class="card-pro" style="background:rgba(0,0,0,0.2); padding:16px; margin-bottom:16px; border-color:var(--warning);"><h4 style="color:var(--warning); margin-bottom:12px;"><i class="fas fa-user-slash"></i> Add to Blacklist</h4><div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"><input type="text" class="form-input-pro" id="blName" placeholder="Player Name"><input type="text" class="form-input-pro" id="blUid" placeholder="Player UID"></div><input type="text" class="form-input-pro" id="blReason" placeholder="Reason" style="margin-top:10px;"><button class="btn-interact btn-warning-pro" style="width:100%; margin-top:12px;" onclick="addBlacklist()"><i class="fas fa-ban"></i> Blacklist User</button></div><div style="overflow-x:auto;"><table class="admin-table"><thead><tr><th>Name</th><th>UID</th><th>Reason</th><th>Action</th></tr></thead><tbody id="adminBlacklist"></tbody></table></div></div><div id="adminTabSystem" class="admin-tab-content" style="display:none;"><div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;"><div class="card-pro" style="background:rgba(0,0,0,0.2); padding:16px;"><label class="form-label-pro"><i class="fas fa-bullhorn"></i> Broadcast Message</label><input type="text" class="form-input-pro" id="broadcastText" placeholder="Enter message..."><button class="btn-interact btn-primary-pro" style="width:100%; margin-top:10px;" onclick="sendBroadcast()"><i class="fas fa-paper-plane"></i> Send</button></div><div class="card-pro" style="background:rgba(0,0,0,0.2); padding:16px; border-color:var(--admin-color);"><label class="form-label-pro" style="color:var(--admin-color);"><i class="fas fa-exclamation-triangle"></i> Danger Zone</label><button class="btn-interact btn-danger-pro" style="width:100%; margin-bottom:8px;" onclick="clearChat()"><i class="fas fa-eraser"></i> Clear Chat</button><button class="btn-interact btn-danger-pro" style="width:100%;" onclick="resetData()"><i class="fas fa-trash"></i> Reset All Data</button></div></div></div></div></div></div></div>
+
+    <div id="toastContainer" style="position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <script>
+        // ===== FIREBASE CONFIG =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu5ieXpAK7V0q0pMG7c-xj-P8qARHctC8",
+            authDomain: "mafiya-esports.firebaseapp.com",
+            databaseURL: "https://mafiya-esports-default-rtdb.firebaseio.com",
+            projectId: "mafiya-esports",
+            storageBucket: "mafiya-esports.firebasestorage.app",
+            messagingSenderId: "427320508117",
+            appId: "1:427320508117:web:bea1e6ee95581284acac5c",
+            measurementId: "G-86TWV5E1JG"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const storage = firebase.storage();
+
+        // ===== STATE =====
+        let players = []; let teams = []; let matches = []; let blacklist = []; let currentUser = null; let isAdmin = false;
+        let tempAvatarFile = null;
+        const ADMIN_PASS = "YT10M_BOSS";
+
+        // ===== PASSWORD TOGGLE FUNCTION =====
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initParticles(); initNav(); initForms(); initInteractions(); initFirebaseListeners(); checkSession();
+        });
+
+        // ===== PARTICLES =====
+        function initParticles() {
+            const canvas = document.getElementById('bg-canvas'); const ctx = canvas.getContext('2d'); let particles = []; let mouse = { x: null, y: null, radius: 150 };
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            class Particle { constructor() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.size = Math.random() * 2 + 1; this.baseX = this.x; this.baseY = this.y; this.density = (Math.random() * 30) + 1; this.color = Math.random() > 0.5 ? 'rgba(0, 243, 255, 0.8)' : 'rgba(212, 0, 255, 0.8)'; } draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.closePath(); ctx.fill(); } update() { if (mouse.x != null) { let dx = mouse.x - this.x; let dy = mouse.y - this.y; let distance = Math.sqrt(dx * dx + dy * dy); if (distance < mouse.radius) { let forceDirectionX = dx / distance; let forceDirectionY = dy / distance; let force = (mouse.radius - distance) / mouse.radius; this.x -= forceDirectionX * force * this.density; this.y -= forceDirectionY * force * this.density; } } if (this.x !== this.baseX) { let dx = this.x - this.baseX; this.x -= dx / 20; } if (this.y !== this.baseY) { let dy = this.y - this.baseY; this.y -= dy / 20; } } }
+            function init() { particles = []; let numberOfParticles = (canvas.height * canvas.width) / 9000; for (let i = 0; i < numberOfParticles; i++) { particles.push(new Particle()); } }
+            function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); for (let i = 0; i < particles.length; i++) { particles[i].draw(); particles[i].update(); } connect(); requestAnimationFrame(animate); }
+            function connect() { for (let a = 0; a < particles.length; a++) { for (let b = a; b < particles.length; b++) { let distance = ((particles[a].x - particles[b].x) ** 2) + ((particles[a].y - particles[b].y) ** 2); if (distance < 10000) { let opacityValue = 1 - (distance / 10000); ctx.strokeStyle = 'rgba(0, 243, 255,' + opacityValue * 0.3 + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(particles[a].x, particles[a].y); ctx.lineTo(particles[b].x, particles[b].y); ctx.stroke(); } } } }
+            window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; }); window.addEventListener('mouseout', () => { mouse.x = undefined; mouse.y = undefined; });
+            resize(); init(); animate(); window.addEventListener('resize', () => { resize(); init(); });
+        }
+
+        // ===== AUTH =====
+        function openAuthModal() { if (currentUser) { if (confirm('Logout?')) logout(); } else { document.getElementById('authModal').style.display = 'flex'; toggleAuthForm('login'); } }
+        function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+        function toggleAuthForm(type) { document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none'; document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none'; document.getElementById('authModalTitle').textContent = type === 'login' ? 'Login' : 'Register'; }
+        
+        function handleLogin() {
+            const uid = document.getElementById('loginUid').value.trim(); const pass = document.getElementById('loginPass').value;
+            if (!uid || !pass) { showToast('Enter UID and Password', 'error'); return; }
+            const isBanned = blacklist.find(b => b.uid === uid); if (isBanned) { showToast('Blacklisted: ' + isBanned.reason, 'error'); return; }
+            const btn = document.getElementById('loginSubmitBtn'); btn.innerHTML = '<span class="loading-spinner"></span>'; btn.disabled = true;
+            db.ref('players/' + uid).once('value').then(snap => {
+                const user = snap.val();
+                if (user && user.password === pass) { currentUser = user; localStorage.setItem('yt_session', uid); updateUIForUser(); closeAuthModal(); showToast('Welcome, ' + user.name, 'success'); }
+                else { showToast('Invalid Credentials', 'error'); }
+            }).catch(err => { showToast('Login Error: ' + err.message, 'error'); }).finally(() => { btn.innerHTML = 'Login'; btn.disabled = false; });
+        }
+        
+        function logout() { currentUser = null; localStorage.removeItem('yt_session'); document.getElementById('authBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Login'; document.getElementById('userProfileArea').style.display = 'none'; showToast('Logged out', 'success'); }
+        function checkSession() { const uid = localStorage.getItem('yt_session'); if (uid) { db.ref('players/' + uid).once('value').then(snap => { if (snap.exists()) { currentUser = snap.val(); updateUIForUser(); } }); } }
+        function updateUIForUser() { if (currentUser) { document.getElementById('authBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout'; document.getElementById('navName').textContent = currentUser.name; document.getElementById('navAvatar').src = currentUser.avatarUrl || 'https://via.placeholder.com/30'; document.getElementById('userProfileArea').style.display = 'flex'; } }
+
+        // ===== ADMIN =====
+        document.getElementById('adminBtn').onclick = () => document.getElementById('adminModal').style.display = 'flex';
+        function closeAdminModal() { document.getElementById('adminModal').style.display = 'none'; }
+        function adminLogin() { if (document.getElementById('adminPassInput').value === ADMIN_PASS) { isAdmin = true; document.getElementById('adminLoginSection').style.display = 'none'; document.getElementById('adminControlSection').style.display = 'block'; updateAdminData(); showToast('Admin access', 'success'); } else { showToast('Wrong Password', 'error'); } }
+        function switchAdminTab(tab) { document.querySelectorAll('.admin-tab-btn').forEach(btn => { btn.style.background = 'transparent'; btn.style.color = 'var(--text-muted)'; }); document.querySelector(`[data-tab="${tab}"]`).style.background = 'var(--admin-color)'; document.querySelector(`[data-tab="${tab}"]`).style.color = 'white'; document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none'); document.getElementById('adminTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block'; }
+        function updateAdminData() {
+            const userList = document.getElementById('adminUserList');
+            if (players.length === 0) { userList.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No players</td></tr>'; }
+            else { userList.innerHTML = players.map(p => `<tr><td style="font-weight:600;">${p.name}</td><td style="color:var(--primary);">${p.uid}</td><td><button class="btn-interact btn-danger-pro" style="padding:6px 12px; font-size:0.8rem;" onclick="deleteUser('${p.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+            document.getElementById('attendancePlayer').innerHTML = '<option value="">Select Player</option>' + players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            const matchList = document.getElementById('adminMatchList'); if (matches.length === 0) { matchList.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No matches</td></tr>'; } else { matchList.innerHTML = matches.map(m => `<tr><td><strong>${m.teamA}</strong> vs <strong>${m.teamB}</strong></td><td style="color:var(--primary); font-weight:700;">${m.scoreA || 0} - ${m.scoreB || 0}</td><td><button class="btn-interact btn-danger-pro" style="padding:6px 12px;" onclick="deleteMatch('${m.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+            const blList = document.getElementById('adminBlacklist'); if (blacklist.length === 0) { blList.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No blacklist</td></tr>'; } else { blList.innerHTML = blacklist.map(b => `<tr style="color:var(--warning);"><td>${b.name}</td><td>${b.uid}</td><td>${b.reason}</td><td><button class="btn-interact btn-primary-pro" style="padding:6px 12px;" onclick="removeBlacklist('${b.id}')"><i class="fas fa-undo"></i></button></td></tr>`).join(''); }
+        }
+        
+        function deleteUser(id) { if (confirm('Delete?')) db.ref('players/' + id).remove().then(() => showToast('Deleted', 'success')).catch(err => showToast('Error: ' + err.message, 'error')); }
+        function addMatch() {
+            const teamA = document.getElementById('matchTeamA').value.trim(); const teamB = document.getElementById('matchTeamB').value.trim(); const time = document.getElementById('matchTime').value.trim(); const scoreA = parseInt(document.getElementById('matchScoreA').value) || 0; const scoreB = parseInt(document.getElementById('matchScoreB').value) || 0;
+            if (!teamA || !teamB) { showToast('Enter team names', 'error'); return; }
+            const id = Date.now().toString();
+            db.ref('matches/' + id).set({ id, teamA, teamB, time, scoreA, scoreB, status: 'Completed' }).then(() => { showToast('Match added', 'success'); document.getElementById('matchTeamA').value = ''; document.getElementById('matchTeamB').value = ''; document.getElementById('matchTime').value = ''; document.getElementById('matchScoreA').value = ''; document.getElementById('matchScoreB').value = ''; }).catch(err => showToast('Error: ' + err.message, 'error'));
+        }
+        function deleteMatch(id) { if (confirm('Delete?')) db.ref('matches/' + id).remove().then(() => showToast('Deleted', 'success')); }
+        function addBlacklist() { const name = document.getElementById('blName').value.trim(); const uid = document.getElementById('blUid').value.trim(); const reason = document.getElementById('blReason').value.trim() || 'No reason'; if (!name || !uid) { showToast('Enter Name & UID', 'error'); return; } const id = Date.now().toString(); db.ref('blacklist/' + id).set({ id, name, uid, reason }).then(() => { showToast('Blacklisted', 'success'); document.getElementById('blName').value = ''; document.getElementById('blUid').value = ''; document.getElementById('blReason').value = ''; }).catch(err => showToast('Error: ' + err.message, 'error')); }
+        function removeBlacklist(id) { if (confirm('Remove?')) db.ref('blacklist/' + id).remove().then(() => showToast('Removed', 'success')); }
+        function clearChat() { if (confirm('Clear all chat?')) db.ref('chat').remove().then(() => showToast('Cleared', 'success')); }
+        function resetData() { if (confirm('DELETE ALL DATA?')) { db.ref('players').remove(); db.ref('teams').remove(); db.ref('chat').remove(); db.ref('matches').remove(); db.ref('screenshots').remove(); db.ref('blacklist').remove(); showToast('Reset Done', 'success'); } }
+        function sendBroadcast() { const text = document.getElementById('broadcastText').value.trim(); if (!text) return; db.ref('notifications').push({ text, time: Date.now() }).then(() => { showToast('Sent', 'success'); document.getElementById('broadcastText').value = ''; }); }
+
+        // ===== REGISTRATION =====
+        function initForms() {
+            const inputs = ['playerName', 'playerUid', 'playerKd', 'playerAct', 'playerHs', 'playerRole'];
+            inputs.forEach(id => document.getElementById(id).addEventListener('input', updateLivePreview));
+
+            document.getElementById('avatarInput').onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    tempAvatarFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        document.getElementById('avatarPreviewImg').src = ev.target.result;
+                        document.getElementById('cardAvatar').innerHTML = `<img src="${ev.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            document.getElementById('playerForm').onsubmit = (e) => {
+                e.preventDefault();
+                document.getElementById('errorBox').style.display = 'none';
+                let rawUid = document.getElementById('playerUid').value.trim();
+                const cleanUid = rawUid.replace(/[.#$\[\]]/g, '_'); 
+                
+                if (!cleanUid) { showError("UID is invalid."); return; }
+                const isBanned = blacklist.find(b => b.uid === cleanUid);
+                if (isBanned) { showError('Blacklisted: ' + isBanned.reason); return; }
+
+                const name = document.getElementById('playerName').value.trim();
+                const pass = document.getElementById('playerPass').value;
+                const kd = parseFloat(document.getElementById('playerKd').value) || 0;
+                const act = parseInt(document.getElementById('playerAct').value) || 0;
+                const hs = parseInt(document.getElementById('playerHs').value) || 0;
+                const role = document.getElementById('playerRole').value;
+
+                const btn = document.getElementById('registerBtn');
+                btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+                btn.disabled = true;
+
+                db.ref('players/' + cleanUid).once('value')
+                    .then(snap => {
+                        if (snap.exists()) { showError('UID already registered.'); btn.innerHTML = 'Save Profile'; btn.disabled = false; return; }
+                        const savePlayer = (url) => {
+                            const data = { id: cleanUid, uid: cleanUid, name, password: pass, kd, act, hs, role, officerRank: 'None', avatarUrl: url || '', createdAt: Date.now() };
+                            db.ref('players/' + cleanUid).set(data)
+                                .then(() => {
+                                    showToast('Registration Successful!', 'success');
+                                    document.getElementById('playerForm').reset();
+                                    tempAvatarFile = null;
+                                    document.getElementById('avatarPreviewImg').src = 'https://via.placeholder.com/100/020205/00f3ff?text=ADD';
+                                    document.getElementById('cardAvatar').innerHTML = '<i class="fas fa-user" style="color:#333; font-size:2rem;"></i>';
+                                    updateLivePreview();
+                                    currentUser = data; localStorage.setItem('yt_session', cleanUid); updateUIForUser();
+                                    btn.innerHTML = 'Save Profile'; btn.disabled = false;
+                                })
+                                .catch(err => {
+                                    if (err.code === "PERMISSION_DENIED") { showError('DATABASE PERMISSION DENIED. Check Firebase Rules.'); } 
+                                    else { showError('Database Error: ' + err.message); }
+                                    btn.innerHTML = 'Save Profile'; btn.disabled = false;
+                                });
+                        };
+                        if (tempAvatarFile) {
+                            const ref = storage.ref('avatars/' + cleanUid);
+                            ref.put(tempAvatarFile).then(() => ref.getDownloadURL()).then(url => savePlayer(url)).catch(err => { showError('Upload Failed: ' + err.message); btn.innerHTML = 'Save Profile'; btn.disabled = false; });
+                        } else { savePlayer(""); }
+                    }).catch(err => { showError('Error: ' + err.message); btn.innerHTML = 'Save Profile'; btn.disabled = false; });
+            };
+
+            document.getElementById('tournamentForm').onsubmit = (e) => { e.preventDefault(); if (teams.length >= 24) { showToast('Full', 'error'); return; } const team = { slot: teams.length + 1, name: document.getElementById('teamName').value.trim(), players: [document.getElementById('uid1').value.trim(), document.getElementById('uid2').value.trim(), document.getElementById('uid3').value.trim(), document.getElementById('uid4').value.trim()] }; db.ref('teams').push(team).then(() => { document.getElementById('tournamentForm').reset(); showToast('Registered', 'success'); }); };
+            document.getElementById('checkInBtn').onclick = () => { const pid = document.getElementById('attendancePlayer').value; if (!pid) return; const today = new Date().toISOString().split('T')[0]; db.ref('attendance/' + today).once('value').then(snap => { let list = snap.val() || []; if (list.includes(pid)) { showToast('Already checked', 'error'); return; } list.push(pid); return db.ref('attendance/' + today).set(list); }).then(() => showToast('Checked In', 'success')); };
+            document.getElementById('sendChatBtn').onclick = () => { const text = document.getElementById('chatMsg').value.trim(); if (!text) return; db.ref('chat').push({ sender: currentUser ? currentUser.name : 'Guest', text, time: Date.now() }); document.getElementById('chatMsg').value = ''; };
+            const up = document.getElementById('fileUpload'); const inp = document.getElementById('screenshotInput'); up.onclick = () => inp.click(); inp.onchange = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0]); };
+        }
+
+        function showError(msg) { document.getElementById('errorText').textContent = msg; document.getElementById('errorBox').style.display = 'block'; showToast('Error Occurred', 'error'); }
+        function updateLivePreview() {
+            document.getElementById('cardName').textContent = document.getElementById('playerName').value || 'PLAYER NAME';
+            document.getElementById('cardUid').textContent = document.getElementById('playerUid').value || '0000';
+            document.getElementById('cardKd').textContent = parseFloat(document.getElementById('playerKd').value).toFixed(2) || '0.00';
+            document.getElementById('cardAct').textContent = document.getElementById('playerAct').value || '0';
+            document.getElementById('cardHs').textContent = (document.getElementById('playerHs').value || '0') + '%';
+            document.getElementById('cardRole').textContent = document.getElementById('playerRole').value || 'ROLE';
+        }
+        function downloadCard() { const card = document.getElementById('playerCardPreview'); html2canvas(card, { backgroundColor: null, scale: 2, useCORS: true }).then(canvas => { const link = document.createElement('a'); link.download = 'YT_LOVER_Card.png'; link.href = canvas.toDataURL(); link.click(); showToast('Downloaded!', 'success'); }).catch(err => showToast('Download failed', 'error')); }
+
+        // ===== LISTENERS =====
+        function initFirebaseListeners() {
+            db.ref('players').on('value', snap => { players = snap.val() ? Object.values(snap.val()) : []; updateDashboard(); updatePlayerList(); updateAdminData(); });
+            db.ref('teams').on('value', snap => { teams = snap.val() ? Object.values(snap.val()) : []; updateSlots(); updateTeamList(); });
+            db.ref('matches').on('value', snap => { matches = snap.val() ? Object.values(snap.val()) : []; updateMatchesPage(); updateDashboard(); updateAdminData(); });
+            db.ref('blacklist').on('value', snap => { blacklist = snap.val() ? Object.values(snap.val()) : []; updateAdminData(); });
+            db.ref('attendance').on('value', snap => { generateAttendanceGrid(snap.val() || {}); });
+            db.ref('screenshots').on('value', snap => { updateGallery(snap.val() ? Object.values(snap.val()) : []); });
+            db.ref('chat').on('value', snap => { renderChat(snap.val() ? Object.values(snap.val()) : []); });
+        }
+
+        // ===== RENDER UI =====
+        function updateDashboard() { document.getElementById('statPlayers').textContent = players.length; document.getElementById('statMatches').textContent = matches.length; document.getElementById('statTeams').textContent = teams.length; }
+        function updateMatchesPage() { const container = document.getElementById('matchesListContainer'); if (matches.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No matches</div>'; return; } container.innerHTML = matches.map(m => `<div style="border:1px solid var(--border-color); border-radius:12px; padding:16px; margin-bottom:16px; background:rgba(0,0,0,0.2); text-align:center;"><div style="font-weight:700;">${m.teamA} <span style="color:var(--primary)">${m.scoreA} - ${m.scoreB}</span> ${m.teamB}</div></div>`).join(''); }
+        function updatePlayerList() { const container = document.getElementById('playerListContainer'); if (players.length === 0) { container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No players</div>'; return; } container.innerHTML = players.map(p => `<div style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border-color);"><div style="display:flex; align-items:center; gap:12px;"><img src="${p.avatarUrl || 'https://via.placeholder.com/40'}" style="width:45px; height:45px; border-radius:50%; border:2px solid var(--primary);"><div><h4 style="font-weight:700;">${p.name}</h4><span style="font-size:0.8rem; color:var(--text-muted);">UID: ${p.uid}</span></div></div><div style="color:var(--primary); font-weight:700;">${p.kd ? p.kd.toFixed(2) : '0.00'} K/D</div></div>`).join(''); }
+        function updateTeamList() { const container = document.getElementById('teamListContainer'); if (teams.length === 0) { container.innerHTML = '<div style="color:var(--text-muted); grid-column:1/-1; text-align:center; padding:40px;">No teams</div>'; return; } container.innerHTML = teams.map(t => `<div class="card-pro" style="background:rgba(0,0,0,0.2); padding:16px;"><h4 style="color:var(--accent); margin-bottom:10px;"><i class="fas fa-users"></i> ${t.name}</h4><div style="font-size:0.85rem; color:var(--text-muted);">${t.players.map(u => `<div style="padding:2px 0;"><i class="fas fa-user"></i> ${u}</div>`).join('')}</div></div>`).join(''); }
+        function updateSlots() { const grid = document.getElementById('slotsGrid'); let html = ''; for (let i = 1; i <= 24; i++) { const t = teams.find(x => x.slot === i); html += `<div style="padding:12px; text-align:center; border-radius:8px; border:1px solid ${t ? 'var(--primary)' : 'var(--border-color)'}; background:${t ? 'rgba(0, 243, 255, 0.1)' : 'transparent'};"><div style="font-size:0.7rem; color:var(--text-muted);">Slot ${i}</div><div style="font-weight:700; color:${t ? 'var(--primary)' : 'var(--text-muted)'};">${t ? t.name : 'EMPTY'}</div></div>`; } grid.innerHTML = html; document.getElementById('slotsFilled').textContent = teams.length; }
+        function generateAttendanceGrid(data) { const grid = document.getElementById('attendanceGrid'); const now = new Date(); const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(); let html = ''; for (let i = 1; i <= days; i++) { const d = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`; const checked = data[d] && data[d].length > 0; html += `<div style="padding:10px; text-align:center; border-radius:6px; border:1px solid ${checked ? 'var(--success)' : 'var(--border-color)'}; color:${checked ? 'var(--success)' : 'var(--text-muted)'}; background:${checked ? 'rgba(0,255,136,0.1)' : 'transparent'}; font-weight:700;">${i}</div>`; } grid.innerHTML = html; }
+        function renderChat(data) { const c = document.getElementById('chatMessages'); if (!data || data.length === 0) { c.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">No messages</div>'; return; } c.innerHTML = data.sort((a, b) => a.time - b.time).map(m => `<div style="margin-bottom:12px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;"><strong style="color:var(--primary);"><i class="fas fa-user"></i> ${m.sender}</strong><div style="margin-top:5px;">${m.text}</div></div>`).join(''); c.scrollTop = c.scrollHeight; }
+        function uploadFile(file) { const id = Date.now(); const ref = storage.ref('glory/' + id); ref.put(file).then(() => ref.getDownloadURL()).then(url => db.ref('screenshots/' + id).set({ id, url })).then(() => showToast('Uploaded', 'success')).catch(err => showToast('Upload Error: ' + err.message, 'error')); }
+        function updateGallery(data) { const gal = document.getElementById('screenshotGallery'); if (!data || data.length === 0) { gal.innerHTML = '<div style="color:var(--text-muted); text-align:center; grid-column:1/-1; padding:40px;">No screenshots</div>'; return; } gal.innerHTML = data.map(s => `<div style="position:relative; border-radius:8px; overflow:hidden;"><img src="${s.url}" style="width:100%; border-radius:8px;"><button class="btn-interact btn-danger-pro" style="position:absolute; top:10px; right:10px; padding:5px 10px;" onclick="db.ref('screenshots/'+${s.id}).remove()"><i class="fas fa-trash"></i></button></div>`).join(''); }
+
+        // ===== NAVIGATION =====
+        function initNav() { const items = document.querySelectorAll('.nav-item'); const pages = document.querySelectorAll('.page'); const sidebar = document.getElementById('sidebar'); items.forEach(item => { item.addEventListener('click', () => { items.forEach(i => i.classList.remove('active')); item.classList.add('active'); pages.forEach(p => p.classList.remove('active')); document.getElementById(`page-${item.dataset.page}`).classList.add('active'); document.getElementById('pageTitle').textContent = item.textContent.trim().toUpperCase(); if (window.innerWidth <= 768) sidebar.classList.remove('open'); }); }); document.getElementById('mobileToggle').onclick = () => sidebar.classList.toggle('open'); }
+
+        function showToast(msg, type) { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.style.cssText = `background: #080b14; border: 1px solid ${type === 'success' ? 'var(--success)' : 'var(--admin-color)'}; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.5);`; t.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}" style="color:${type === 'success' ? 'var(--success)' : 'var(--admin-color)'}; font-size:1.2rem;"></i> ${msg}`; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4000); }
+
+        function initInteractions() { const buttons = document.querySelectorAll('.btn-interact'); const AudioContext = window.AudioContext || window.webkitAudioContext; let audioCtx; document.body.addEventListener('click', () => { if (!audioCtx) audioCtx = new AudioContext(); }, { once: true }); buttons.forEach(btn => { btn.addEventListener('click', (e) => { createRipple(e); if (audioCtx && audioCtx.state === 'running') { const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.connect(g); g.connect(audioCtx.destination); osc.frequency.value = 200; g.gain.value = 0.05; osc.start(); osc.stop(audioCtx.currentTime + 0.1); } }); }); }
+        function createRipple(e) { const btn = e.currentTarget; const circle = document.createElement("span"); const diameter = Math.max(btn.clientWidth, btn.clientHeight); const radius = diameter / 2; circle.style.width = circle.style.height = `${diameter}px`; circle.style.left = `${e.clientX - btn.getBoundingClientRect().left - radius}px`; circle.style.top = `${e.clientY - btn.getBoundingClientRect().top - radius}px`; circle.classList.add("ripple"); const r = btn.querySelector(".ripple"); if (r) r.remove(); btn.appendChild(circle); }
+    </script>
+</body>
+</html>
