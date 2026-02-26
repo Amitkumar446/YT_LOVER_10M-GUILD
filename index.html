@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YT LOVER 10M | Esports Portal</title>
+    <title>YT LOVER 10M | Neon Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,104 +11,145 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <style>
+        /* Theme & Styles */
         :root {
-            --bg-body: #05070a; --bg-sidebar: #0a0c10; --bg-card: rgba(12, 15, 22, 0.9);
-            --border-color: rgba(0, 212, 255, 0.15); --primary: #00d4ff; --primary-glow: rgba(0, 212, 255, 0.5);
-            --accent: #ffc83d; --admin-color: #ff3d5a; --success: #2dd4a0; --text-main: #f0f2f5;
-            --text-muted: #6b7280; --gradient-accent: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
-            --role-assaulter: #ff4d4d; --role-sniper: #4dff88; --role-support: #4d88ff; --role-igl: #ffd700;
-            --card-color: var(--primary); --card-glow: var(--primary-glow);
+            --bg-body: #05070a; --bg-sidebar: rgba(10, 10, 18, 0.95); --bg-card: rgba(15, 15, 25, 0.6);
+            --border-color: rgba(255, 255, 255, 0.08); --primary: #00f3ff; --primary-glow: rgba(0, 243, 255, 0.4);
+            --accent: #bc13fe; --accent-glow: rgba(188, 19, 254, 0.4); --admin-color: #ff3d5a; 
+            --success: #00ff9d; --text-main: #ffffff; --text-muted: #8b8fa3;
+            --gradient-main: linear-gradient(135deg, #00f3ff 0%, #bc13fe 100%);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Space Grotesk', sans-serif; background: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
-        .font-display { font-family: 'Chakra Petch', monospace; }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        .bg-overlay { position: fixed; width: 100%; height: 100%; background: radial-gradient(ellipse at 10% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%); z-index: 1; pointer-events: none; }
+        .font-display { font-family: 'Chakra Petch', monospace; letter-spacing: 0.5px; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         /* Layout */
-        .sidebar { position: fixed; left: 0; top: 0; width: 280px; height: 100vh; background: rgba(10, 12, 16, 0.98); border-right: 1px solid var(--border-color); z-index: 100; display: flex; flex-direction: column; transition: transform 0.3s; }
-        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 280px; height: 100vh; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); backdrop-filter: blur(20px); z-index: 100; display: flex; flex-direction: column; transition: transform 0.3s; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
 
+        /* Mobile Bottom Navigation */
+        .mobile-bottom-nav { display: none; }
+
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-105%); z-index: 200; }
+            .sidebar { transform: translateX(-105%); z-index: 200; width: 280px; }
             .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0 !important; }
+            .main-content { margin-left: 0 !important; padding-bottom: 70px; }
             .header { padding: 14px 16px; }
             .page { padding: 16px; }
+            
+            .mobile-bottom-nav { 
+                display: flex; position: fixed; bottom: 0; left: 0; width: 100%; 
+                background: rgba(10, 10, 18, 0.98); border-top: 1px solid var(--border-color);
+                justify-content: space-around; align-items: center; height: 60px; z-index: 150;
+                backdrop-filter: blur(10px);
+            }
+            .mobile-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); font-size: 0.7rem; cursor: pointer; padding: 8px; transition: color 0.2s; width: 20%; text-align: center; }
+            .mobile-nav-item i { font-size: 1.2rem; }
+            .mobile-nav-item.active { color: var(--primary); }
+            
             .player-card-grid { grid-template-columns: 1fr !important; }
+            .form-input-pro { padding: 14px 16px; }
         }
 
-        /* Components */
+        /* Common Components */
         .brand-area { padding: 28px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 14px; }
-        .brand-logo { width: 48px; height: 48px; background: var(--gradient-accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #000; box-shadow: 0 0 20px var(--primary-glow); }
-        .brand-text h1 { font-size: 1.2rem; font-weight: 700; background: linear-gradient(90deg, #fff 0%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand-logo { width: 50px; height: 50px; background: var(--gradient-main); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #000; box-shadow: 0 0 25px var(--primary-glow); }
+        .brand-text h1 { font-size: 1.3rem; font-weight: 700; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand-text span { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
         
         .nav-menu { flex: 1; padding: 20px 12px; overflow-y: auto; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; cursor: pointer; color: var(--text-muted); margin-bottom: 4px; transition: all 0.2s; font-weight: 500; font-size: 0.9rem; }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
-        .nav-item.active { background: rgba(0, 212, 255, 0.1); color: var(--primary); }
+        .nav-label { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); padding: 10px 14px; letter-spacing: 2px; margin-top: 10px; font-weight: 700; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer; color: var(--text-muted); margin-bottom: 4px; transition: all 0.3s; font-weight: 500; font-size: 0.9rem; position: relative; overflow: hidden; }
+        .nav-item::before { content: ''; position: absolute; left: 0; top: 0; width: 3px; height: 100%; background: var(--primary); opacity: 0; transition: opacity 0.3s; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        .nav-item.active { background: rgba(0, 243, 255, 0.1); color: var(--primary); }
+        .nav-item.active::before { opacity: 1; box-shadow: 0 0 10px var(--primary); }
         
         .sidebar-footer { padding: 16px; border-top: 1px solid var(--border-color); display: grid; gap: 10px; }
-        .btn-interact { position: relative; overflow: hidden; transition: all 0.2s; cursor: pointer; border: none; }
-        .main-content { margin-left: 280px; min-height: 100vh; position: relative; z-index: 10; transition: margin-left 0.3s; }
-
-        .header { padding: 14px 24px; background: rgba(10, 12, 16, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
-        .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
-        .page-title::before { content: '//'; color: var(--primary); margin-right: 8px; }
         
-        .notif-bell { position: relative; cursor: pointer; font-size: 1.2rem; color: var(--text-muted); padding: 8px; }
-        .notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--admin-color); border-radius: 50%; display: none; }
-        .notif-dropdown { position: absolute; top: 100%; right: 0; width: 280px; background: #151820; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-
-        .card-pro { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; backdrop-filter: blur(20px); overflow: hidden; position: relative; margin-bottom: 20px; }
-        .card-header-pro { padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; }
-        .card-title-pro { font-size: 1rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .card-body-pro { padding: 20px; }
-
-        .btn-primary-pro { background: var(--gradient-accent); color: #000; padding: 12px 20px; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 15px var(--primary-glow); width: 100%; font-size: 0.9rem; }
+        .header { padding: 14px 24px; background: rgba(10, 10, 18, 0.8); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .page-title { font-size: 1.1rem; font-weight: 700; color: #fff; }
+        .page-title::before { content: '//'; color: var(--accent); margin-right: 8px; }
+        
+        .main-content { margin-left: 280px; min-height: 100vh; position: relative; z-index: 10; transition: margin-left 0.3s; }
+        
+        .btn-interact { position: relative; overflow: hidden; transition: all 0.3s; cursor: pointer; border: none; z-index: 1; }
+        .btn-interact::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; z-index: -1; }
+        .btn-interact:hover::before { left: 100%; }
+        .btn-primary-pro { background: var(--gradient-main); color: #000; padding: 12px 20px; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 15px var(--primary-glow); width: 100%; font-size: 0.9rem; }
         .btn-danger-pro { background: linear-gradient(135deg, var(--admin-color) 0%, #cc2244 100%); color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; border: none; }
         
-        .form-input-pro { width: 100%; padding: 12px 16px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.95rem; margin-bottom: 12px; transition: border-color 0.2s; }
-        .form-input-pro:focus { outline: none; border-color: var(--primary); }
-
+        .card-pro { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; backdrop-filter: blur(20px); overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .card-header-pro { padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center; }
+        .card-title-pro { font-size: 1rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .card-title-pro i { color: var(--accent); }
+        .card-body-pro { padding: 20px; }
+        
+        .form-input-pro { width: 100%; padding: 12px 16px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.95rem; margin-bottom: 12px; transition: all 0.3s; font-family: inherit; }
+        .form-input-pro:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); background: rgba(0, 0, 0, 0.6); }
+        
         /* Player Card Styles */
         .player-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
         .avatar-display { width: 100px; height: 100px; margin: 0 auto 20px; position: relative; }
         .avatar-display img { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; background: #000; }
-
-        .player-card-live { width: 100%; max-width: 380px; margin: 0 auto; background: linear-gradient(160deg, #0d0f14 0%, #151820 50%, #05070a 100%); border-radius: 20px; overflow: hidden; border: 2px solid var(--card-color); box-shadow: 0 0 40px var(--card-glow); position: relative; transition: border-color 0.5s, box-shadow 0.5s; }
-        .card-bg-art { height: 130px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, transparent 50%), linear-gradient(225deg, rgba(255, 200, 61, 0.15) 0%, transparent 50%); position: relative; }
-        .card-avatar-cont { position: absolute; top: 85px; left: 50%; transform: translateX(-50%); width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--card-color); overflow: hidden; background: #000; box-shadow: 0 0 20px var(--card-glow); z-index: 10; transition: border-color 0.5s, box-shadow 0.5s; }
+        .player-card-live { width: 100%; max-width: 380px; margin: 0 auto; background: linear-gradient(160deg, #0d0f14 0%, #1a1a2e 50%, #0f0f1a 100%); border-radius: 24px; overflow: hidden; border: 2px solid var(--card-color); box-shadow: 0 0 50px var(--card-glow); position: relative; transition: all 0.5s; }
+        .card-bg-art { height: 140px; background: linear-gradient(135deg, rgba(0, 243, 255, 0.2) 0%, transparent 50%), linear-gradient(225deg, rgba(188, 19, 254, 0.2) 0%, transparent 50%); position: relative; overflow: hidden; }
+        .card-bg-art::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(transparent, rgba(255,255,255,0.1), transparent 30%); animation: rotate 10s linear infinite; }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        .card-avatar-cont { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); width: 85px; height: 85px; border-radius: 50%; border: 3px solid var(--card-color); overflow: hidden; background: #000; box-shadow: 0 0 25px var(--card-glow); z-index: 10; transition: all 0.5s; }
         .card-avatar-cont img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .card-rank-badge { display: inline-block; padding: 4px 12px; background: linear-gradient(90deg, var(--accent), #ffdb58); color: #000; font-weight: 700; font-size: 0.75rem; border-radius: 20px; text-transform: uppercase; margin-top: 6px; box-shadow: 0 0 10px rgba(255, 200, 61, 0.4); }
-        .stat-value { font-size: 2.5rem; font-weight: 800; line-height: 1; margin-bottom: 8px; font-family: 'Chakra Petch', sans-serif; }
+        .card-rank-badge { display: inline-block; padding: 5px 16px; color: #000; font-weight: 700; font-size: 0.75rem; border-radius: 20px; text-transform: uppercase; margin-top: 6px; box-shadow: 0 0 15px rgba(255, 200, 61, 0.4); border: 1px solid rgba(255,255,255,0.2); }
+        .stat-value { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 8px; font-family: 'Chakra Petch', sans-serif; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
         .page { display: none; padding: 24px; animation: fadeIn 0.4s ease; }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Others */
-        .modal-pro { background: #0d0f14; border: 1px solid var(--border-color); border-radius: 20px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+        .modal-pro { background: rgba(15, 15, 25, 0.95); border: 1px solid var(--border-color); border-radius: 24px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px var(--accent-glow); backdrop-filter: blur(10px); }
         .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .admin-table th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; }
+        .admin-table th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
         .admin-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
-        .member-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
-        .member-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover; }
-        .uid-copy-box { display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 212, 255, 0.1); padding: 2px 6px; border-radius: 4px; cursor: pointer; }
-        .uid-text { color: var(--primary); font-weight: 600; font-size: 0.75rem; }
-        .toast { background: #151820; border: 1px solid; padding: 12px 20px; border-radius: 10px; margin-bottom: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); animation: toastIn 0.3s; }
+        .member-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
+        .member-item:hover { background: rgba(255,255,255,0.03); }
+        .member-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
+        .uid-copy-box { display: inline-flex; align-items: center; gap: 6px; background: rgba(188, 19, 254, 0.15); padding: 2px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .uid-copy-box:hover { border-color: var(--accent); }
+        .uid-text { color: var(--accent); font-weight: 600; font-size: 0.75rem; }
+        .toast { background: rgba(20, 20, 30, 0.9); border: 1px solid; padding: 12px 20px; border-radius: 12px; margin-bottom: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); animation: toastIn 0.3s; backdrop-filter: blur(5px); }
         @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .pass-wrapper { position: relative; width: 100%; }
         .pass-toggle-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; }
+        .mail-item { background: rgba(0,0,0,0.3); padding: 16px; border-radius: 12px; border-left: 3px solid var(--accent); margin-bottom: 10px; position: relative; }
+        .mail-delete-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; transition: color 0.2s; }
+        .mail-delete-btn:hover { color: var(--admin-color); }
+        .notif-bell { position: relative; cursor: pointer; font-size: 1.2rem; color: var(--text-muted); padding: 8px; transition: color 0.2s; }
+        .notif-dropdown { position: absolute; top: 100%; right: 0; width: 280px; background: rgba(15, 15, 25, 0.95); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; display: none; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+        
+        /* Chat Tab Styles */
+        .chat-tabs { display: flex; gap: 10px; margin-bottom: 0; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); padding: 10px 20px 0; }
+        .chat-tab { background: transparent; border: none; color: var(--text-muted); padding: 10px 16px; cursor: pointer; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+        .chat-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .chat-tab:hover { color: #fff; }
+        
+        /* Admin Chat Styles */
+        .admin-chat-container { height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .admin-msg { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 0.85rem; line-height: 1.4; }
+        .admin-msg.sent { align-self: flex-end; background: var(--primary); color: #000; border-bottom-right-radius: 2px; }
+        .admin-msg.received { align-self: flex-start; background: rgba(255,255,255,0.1); color: #fff; border-bottom-left-radius: 2px; }
+        .admin-msg-meta { font-size: 0.6rem; opacity: 0.7; margin-top: 4px; display: block; }
     </style>
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
-    <div class="bg-overlay"></div>
+    
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
     <!-- Sidebar -->
@@ -126,8 +167,8 @@
             <div class="nav-label">Events</div>
             <div class="nav-item" data-page="teams"><i class="fas fa-users-cog"></i><span>Teams List</span></div>
             <div class="nav-item" data-page="tournament"><i class="fas fa-trophy"></i><span>Tournament</span></div>
-            <div class="nav-item" data-page="glory"><i class="fas fa-images"></i><span>Glory</span></div>
             <div class="nav-item" data-page="attendance"><i class="fas fa-calendar-check"></i><span>Attendance</span></div>
+            <div class="nav-item" data-page="mail" id="mailNav" style="display:none;"><i class="fas fa-envelope"></i><span>Mail</span><span style="margin-left:auto; background:var(--admin-color); width:8px; height:8px; border-radius:50%; display:none;" id="mailNotifDot"></span></div>
             <div class="nav-item" data-page="chat"><i class="fas fa-comments"></i><span>Chat</span></div>
         </nav>
         <div class="sidebar-footer">
@@ -136,13 +177,22 @@
         </div>
     </aside>
 
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <div class="mobile-nav-item active" data-page="dashboard"><i class="fas fa-home"></i><span>Home</span></div>
+        <div class="mobile-nav-item" data-page="player-card"><i class="fas fa-id-card"></i><span>Card</span></div>
+        <div class="mobile-nav-item" data-page="chat"><i class="fas fa-comments"></i><span>Chat</span></div>
+        <div class="mobile-nav-item" data-page="mail" id="mobileMailNav" style="display:none;"><i class="fas fa-envelope"></i><span>Mail</span></div>
+        <div class="mobile-nav-item" id="mobileAuthBtn" onclick="openAuthModal()"><i class="fas fa-user-circle"></i><span id="mobileAuthText">Login</span></div>
+    </nav>
+
     <!-- Main Content -->
     <main class="main-content">
         <header class="header">
-            <button id="mobileToggle" onclick="toggleMobileSidebar()"><i class="fas fa-bars"></i></button>
+            <button id="mobileToggle" onclick="toggleMobileSidebar()" style="display:none;"><i class="fas fa-bars"></i></button>
             <h1 class="page-title font-display" id="pageTitle">DASHBOARD</h1>
-            <div style="display:flex; align-items:center; gap:16px;">
-                <div class="notif-bell" onclick="toggleNotifDropdown(event)"><i class="fas fa-bell"></i><span class="notif-dot" id="notifDot"></span><div class="notif-dropdown" id="notifDropdown"><h4 style="color:var(--accent); margin-bottom:8px; font-size:0.9rem;">Notifications</h4><div id="notifList"></div></div></div>
+            <div style="display:flex; align-items:center; gap:16px;" class="header-actions">
+                <div class="notif-bell" onclick="toggleNotifDropdown(event)"><i class="fas fa-bell"></i><div class="notif-dropdown" id="notifDropdown"><h4 style="color:var(--accent); margin-bottom:8px; font-size:0.9rem;">Notifications</h4><div id="notifList"></div></div></div>
                 <div id="userProfileArea" style="display:none;"><img id="navAvatar" src="https://via.placeholder.com/30" style="width:32px; height:32px; border-radius:50%; border:2px solid var(--success);"></div>
             </div>
         </header>
@@ -150,11 +200,11 @@
         <!-- Dashboard -->
         <section class="page active" id="page-dashboard">
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:16px; margin-bottom:24px;">
-                <div class="card-pro stat-card" style="border-left-color: var(--primary); padding:20px;"><div class="stat-value" style="color: var(--primary);" id="statPlayers">0</div><div class="stat-label">Players</div></div>
-                <div class="card-pro stat-card" style="border-left-color: var(--accent); padding:20px;"><div class="stat-value" style="color: var(--accent);" id="statMatches">0</div><div class="stat-label">Matches</div></div>
-                <div class="card-pro stat-card" style="border-left-color: var(--success); padding:20px;"><div class="stat-value" style="color: var(--success);" id="statTeams">0</div><div class="stat-label">Teams</div></div>
+                <div class="card-pro" style="border-left: 3px solid var(--primary);"><div class="card-body-pro" style="text-align:center;"><div class="stat-value" id="statPlayers">0</div><div style="color:var(--text-muted); text-transform:uppercase; font-size:0.8rem;">Players</div></div></div>
+                <div class="card-pro" style="border-left: 3px solid var(--accent);"><div class="card-body-pro" style="text-align:center;"><div class="stat-value" id="statMatches">0</div><div style="color:var(--text-muted); text-transform:uppercase; font-size:0.8rem;">Matches</div></div></div>
+                <div class="card-pro" style="border-left: 3px solid var(--success);"><div class="card-body-pro" style="text-align:center;"><div class="stat-value" id="statTeams">0</div><div style="color:var(--text-muted); text-transform:uppercase; font-size:0.8rem;">Teams</div></div></div>
             </div>
-            <div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-bolt"></i> Activity</h3></div><div class="card-body-pro"><p style="color: var(--text-muted); line-height: 1.6; font-size: 0.9rem;">Welcome to YT LOVER 10M Portal. Unique avatars based on UID.</p></div></div>
+            <div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-bolt"></i> Activity</h3></div><div class="card-body-pro"><p style="color: var(--text-muted); line-height: 1.6; font-size: 0.9rem;">Welcome to the new Neon Portal. Manage your esports team with style.</p></div></div>
         </section>
 
         <!-- Player Card Page -->
@@ -166,24 +216,21 @@
                         <form id="playerForm">
                             <div class="avatar-display"><img id="avatarPreviewImg" src="https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=NewPlayer" alt="Avatar"></div>
                             <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: -10px; margin-bottom: 16px; text-align: center;">Unique avatar generated from UID</p>
-
                             <input type="text" class="form-input-pro" id="playerName" placeholder="Player Name" required>
                             <input type="text" class="form-input-pro" id="playerUid" placeholder="Game UID" required>
-
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                                 <input type="number" step="0.01" class="form-input-pro" id="playerKd" placeholder="K/D" required style="margin-bottom:0;">
                                 <input type="number" class="form-input-pro" id="playerAct" placeholder="ACT Score" required style="margin-bottom:0;">
                             </div>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; margin-bottom:12px;">
                                 <input type="number" class="form-input-pro" id="playerHs" placeholder="Headshot %" required style="margin-bottom:0;">
                                 <select class="form-input-pro" id="playerRole" style="margin-bottom:0;">
-                                    <option value="Assaulter">Assaulter (Red)</option>
-                                    <option value="Sniper">Sniper (Green)</option>
-                                    <option value="Support">Support (Blue)</option>
-                                    <option value="IGL">IGL (Golden)</option>
+                                    <option value="Assaulter">Assaulter</option>
+                                    <option value="Sniper">Sniper</option>
+                                    <option value="Support">Support</option>
+                                    <option value="IGL">IGL</option>
                                 </select>
                             </div>
-                            
                             <div class="pass-wrapper">
                                 <input type="password" class="form-input-pro" id="playerPass" placeholder="Password" required style="margin-bottom:0;">
                                 <button type="button" class="pass-toggle-btn" onclick="togglePassword('playerPass', this)"><i class="fas fa-eye"></i></button>
@@ -215,19 +262,77 @@
             </div>
         </section>
 
+        <!-- Mail Page -->
+        <section class="page" id="page-mail"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-envelope-open-text"></i> My Inbox</h3></div><div class="card-body-pro" id="mailListContainer" style="min-height:200px;"><div style="text-align:center; color:var(--text-muted)">Login to view mails</div></div></div></section>
+
+        <!-- Chat Page (Updated) -->
+        <section class="page" id="page-chat">
+            <div class="card-pro" style="height:70vh; display:flex; flex-direction:column;">
+                
+                <div class="chat-tabs">
+                    <button class="chat-tab active" id="btnChatGlobal">Global</button>
+                    <button class="chat-tab" id="btnChatAdmin">Admin Support</button>
+                </div>
+
+                <div id="chatMessages" style="flex:1; overflow-y:auto; padding:12px;"></div>
+                
+                <div style="padding:12px; display:flex; gap:8px; border-top: 1px solid var(--border-color);">
+                    <input type="text" class="form-input-pro" id="chatMsg" placeholder="Type..." style="margin-bottom:0;">
+                    <button class="btn-interact btn-primary-pro" id="sendChatBtn" style="width:auto; padding:0 16px;"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </section>
+
         <!-- Other Pages -->
         <section class="page" id="page-community"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-users"></i> Members</h3></div><div class="card-body-pro" id="playerListContainer" style="padding:0; max-height:70vh; overflow-y:auto;"></div></div></section>
         <section class="page" id="page-matches"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-gamepad"></i> Arena</h3></div><div class="card-body-pro" id="matchesListContainer"></div></div></section>
         <section class="page" id="page-teams"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-users-cog"></i> Teams</h3></div><div class="card-body-pro" id="teamListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:16px;"></div></div></section>
         <section class="page" id="page-tournament"><div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Slots (<span id="slotsFilled">0</span>/24)</h3></div><div class="card-body-pro" id="slotsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px;"></div></div><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Register</h3></div><div class="card-body-pro"><form id="tournamentForm" style="display:grid; gap:10px;"><input type="text" class="form-input-pro" id="teamName" placeholder="Team Name" required><input type="text" class="form-input-pro" id="uid1" placeholder="P1 UID"><input type="text" class="form-input-pro" id="uid2" placeholder="P2 UID"><input type="text" class="form-input-pro" id="uid3" placeholder="P3 UID"><input type="text" class="form-input-pro" id="uid4" placeholder="P4 UID"><button class="btn-interact btn-primary-pro">Register</button></form></div></div></div></section>
-        <section class="page" id="page-glory"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro"><i class="fas fa-cloud-upload-alt"></i> Upload</h3></div><div class="card-body-pro"><div class="btn-interact form-input-pro" id="fileUpload" style="text-align:center; border-style:dashed;"><i class="fas fa-upload" style="color:var(--accent); margin-bottom:8px; display:block;"></i><input type="file" id="screenshotInput" accept="image/*" style="display:none;"></div></div></div><div class="card-pro" style="margin-top:16px;"><div class="card-header-pro"><h3 class="card-title-pro">Gallery</h3></div><div class="card-body-pro" id="screenshotGallery" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;"></div></div></section>
         <section class="page" id="page-attendance"><div class="card-pro"><div class="card-header-pro"><h3 class="card-title-pro">Attendance</h3></div><div class="card-body-pro"><div style="display:flex; gap:8px; margin-bottom:16px;"><select class="form-input-pro" id="attendancePlayer" style="margin-bottom:0;"></select><button class="btn-interact btn-primary-pro" style="width:auto; padding:0 16px;" id="checkInBtn">Check In</button></div><div id="attendanceGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(40px,1fr)); gap:8px;"></div></div></div></section>
-        <section class="page" id="page-chat"><div class="card-pro" style="height:60vh; display:flex; flex-direction:column;"><div class="card-header-pro"><h3 class="card-title-pro">Chat</h3></div><div id="chatMessages" style="flex:1; overflow-y:auto; padding:12px;"></div><div style="padding:12px; display:flex; gap:8px; border-top: 1px solid var(--border-color);"><input type="text" class="form-input-pro" id="chatMsg" placeholder="Type..." style="margin-bottom:0;"><button class="btn-interact btn-primary-pro" id="sendChatBtn" style="width:auto; padding:0 16px;"><i class="fas fa-paper-plane"></i></button></div></div></section>
     </main>
 
     <!-- Modals -->
-    <div id="authModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:200; display:none; align-items:center; justify-content:center; padding:20px;"><div class="modal-pro"><div class="card-header-pro"><h3 style="color: var(--primary);" id="authModalTitle">Login</h3><button style="background:none; border:none; color:white; font-size:1.5rem;" onclick="closeAuthModal()">&times;</button></div><div style="padding:20px;"><div id="loginForm"><input type="text" class="form-input-pro" id="loginUid" placeholder="UID"><div class="pass-wrapper"><input type="password" class="form-input-pro" id="loginPass" placeholder="Password" style="margin-bottom:0;"><button type="button" class="pass-toggle-btn" onclick="togglePassword('loginPass', this)"><i class="fas fa-eye"></i></button></div><button class="btn-interact btn-primary-pro" style="margin-top:16px;" onclick="handleLogin()">Login</button><p style="text-align:center; margin-top:12px; font-size:0.85rem; color:var(--text-muted);">No account? <a href="#" onclick="toggleAuthForm('register')" style="color:var(--accent);">Register</a></p></div><div id="registerForm" style="display:none;"><p style="margin-bottom:12px; font-size:0.9rem;">Create a profile first.</p><button class="btn-interact btn-primary-pro" onclick="closeAuthModal(); document.querySelector('[data-page=\'player-card\']').click();">Go to Registration</button></div></div></div></div>
-    <div id="adminModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:300; display:none; align-items:center; justify-content:center; padding:10px;"><div class="modal-pro" style="width:100%; height:95vh; display:flex; flex-direction:column;"><div class="card-header-pro" style="border-color:var(--admin-color);"><h3 style="color: var(--admin-color);"><i class="fas fa-shield-alt"></i> Admin</h3><button style="background:none; border:none; color:white; font-size:1.5rem;" onclick="closeAdminModal()">&times;</button></div><div style="flex:1; overflow-y:auto; padding:20px;"><div id="adminLoginSection"><div style="max-width:300px; margin:40px auto;"><label style="font-size:0.7rem; color:var(--admin-color); text-transform:uppercase;">Password</label><input type="password" class="form-input-pro" id="adminPassInput" style="border-color:var(--admin-color);"><button class="btn-interact btn-danger-pro" style="width:100%; margin-top:12px;" onclick="adminLogin()">Access</button></div></div><div id="adminControlSection" style="display:none;"><div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;"><button class="btn-interact admin-tab-btn active" onclick="switchAdminTab('users')" data-tab="users" style="background:var(--admin-color); color:white; padding:8px 14px; border-radius:6px;">Players</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('matches')" data-tab="matches" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:8px 14px; border-radius:6px;">Matches</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('blacklist')" data-tab="blacklist" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:8px 14px; border-radius:6px;">Blacklist</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('system')" data-tab="system" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:8px 14px; border-radius:6px;">System</button></div><div id="adminTabUsers" class="admin-tab-content"><table class="admin-table"><thead><tr><th>Name</th><th>UID</th><th>Rank</th><th>Action</th></tr></thead><tbody id="adminUserList"></tbody></table></div><div id="adminTabMatches" class="admin-tab-content" style="display:none;"><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px; margin-bottom:16px;"><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><input type="text" class="form-input-pro" id="matchTeamA" placeholder="Team A"><input type="text" class="form-input-pro" id="matchTeamB" placeholder="Team B"></div><div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px; margin-top:8px;"><input type="text" class="form-input-pro" id="matchTime" placeholder="Time"><input type="number" class="form-input-pro" id="matchScoreA" placeholder="S.A"><input type="number" class="form-input-pro" id="matchScoreB" placeholder="S.B"></div><button class="btn-interact btn-primary-pro" style="margin-top:10px;" onclick="addMatch()">Add</button></div><table class="admin-table"><thead><tr><th>Match</th><th>Score</th><th>Action</th></tr></thead><tbody id="adminMatchList"></tbody></table></div><div id="adminTabBlacklist" class="admin-tab-content" style="display:none;"><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px; margin-bottom:16px; border:1px solid var(--accent);"><input type="text" class="form-input-pro" id="blName" placeholder="Name"><input type="text" class="form-input-pro" id="blUid" placeholder="UID"><input type="text" class="form-input-pro" id="blReason" placeholder="Reason"><button class="btn-interact" style="width:100%; background:var(--accent); color:#000; padding:10px; border-radius:6px; margin-top:8px;" onclick="addBlacklist()">Ban</button></div><table class="admin-table"><thead><tr><th>Name</th><th>Reason</th><th>Action</th></tr></thead><tbody id="adminBlacklist"></tbody></table></div><div id="adminTabSystem" class="admin-tab-content" style="display:none;"><div style="display:grid; gap:16px;"><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px;"><label style="font-size:0.7rem; text-transform:uppercase;">Broadcast Message</label><input type="text" class="form-input-pro" id="broadcastText" placeholder="Enter message"><button class="btn-interact btn-primary-pro" style="margin-top:8px;" onclick="sendBroadcast()">Send</button></div><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px; border:1px solid var(--admin-color);"><label style="font-size:0.7rem; color:var(--admin-color); text-transform:uppercase;">Danger</label><button class="btn-interact btn-danger-pro" style="width:100%; margin-bottom:8px;" onclick="clearChat()">Clear Chat</button><button class="btn-interact btn-danger-pro" style="width:100%;" onclick="resetData()">Reset Data</button></div></div></div></div></div></div></div>
+    <div id="authModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; backdrop-filter: blur(5px);"><div class="modal-pro"><div class="card-header-pro"><h3 style="color: var(--primary);" id="authModalTitle">Login</h3><button style="background:none; border:none; color:white; font-size:1.5rem;" onclick="closeAuthModal()">&times;</button></div><div style="padding:20px;"><div id="loginForm"><input type="text" class="form-input-pro" id="loginUid" placeholder="UID"><div class="pass-wrapper"><input type="password" class="form-input-pro" id="loginPass" placeholder="Password" style="margin-bottom:0;"><button type="button" class="pass-toggle-btn" onclick="togglePassword('loginPass', this)"><i class="fas fa-eye"></i></button></div><button class="btn-interact btn-primary-pro" style="margin-top:16px;" onclick="handleLogin()">Login</button><p style="text-align:center; margin-top:12px; font-size:0.85rem; color:var(--text-muted);">No account? <a href="#" onclick="toggleAuthForm('register')" style="color:var(--accent);">Register</a></p></div><div id="registerForm" style="display:none;"><p style="margin-bottom:12px; font-size:0.9rem;">Create a profile first.</p><button class="btn-interact btn-primary-pro" onclick="closeAuthModal(); document.querySelector('[data-page=\'player-card\']').click();">Go to Registration</button></div></div></div></div>
+    
+    <!-- Admin Modal -->
+    <div id="adminModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:300; display:none; align-items:center; justify-content:center; padding:10px;"><div class="modal-pro" style="width:100%; height:95vh; display:flex; flex-direction:column;"><div class="card-header-pro" style="border-color:var(--admin-color);"><h3 style="color: var(--admin-color);"><i class="fas fa-shield-alt"></i> Admin</h3><button style="background:none; border:none; color:white; font-size:1.5rem;" onclick="closeAdminModal()">&times;</button></div><div style="flex:1; overflow-y:auto; padding:20px;"><div id="adminLoginSection"><div style="max-width:300px; margin:40px auto;"><label style="font-size:0.7rem; color:var(--admin-color); text-transform:uppercase;">Password</label><input type="password" class="form-input-pro" id="adminPassInput" style="border-color:var(--admin-color);"><button class="btn-interact btn-danger-pro" style="width:100%; margin-top:12px;" onclick="adminLogin()">Access</button></div></div><div id="adminControlSection" style="display:none;"><div style="display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap;"><button class="btn-interact admin-tab-btn active" onclick="switchAdminTab('users')" data-tab="users" style="background:var(--admin-color); color:white; padding:8px 14px; border-radius:6px;">Players</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('messaging')" data-tab="messaging" style="background:transparent; border:1px solid var(--primary); color:var(--primary); padding:8px 14px; border-radius:6px;">Messaging</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('matches')" data-tab="matches" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:8px 14px; border-radius:6px;">Matches</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('blacklist')" data-tab="blacklist" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:8px 14px; border-radius:6px;">Blacklist</button><button class="btn-interact admin-tab-btn" onclick="switchAdminTab('system')" data-tab="system" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:8px 14px; border-radius:6px;">System</button></div>
+                <div id="adminTabUsers" class="admin-tab-content"><table class="admin-table"><thead><tr><th>Name</th><th>UID</th><th>Rank</th><th>Action</th></tr></thead><tbody id="adminUserList"></tbody></table></div>
+                
+                <!-- Updated Messaging Tab -->
+                <div id="adminTabMessaging" class="admin-tab-content" style="display:none;">
+                    <div style="display: grid; gap: 20px; grid-template-columns: 1fr 1fr;">
+                        <!-- Personal Mail Section -->
+                        <div style="padding:20px; background:rgba(0,0,0,0.3); border-radius:12px; border:1px solid var(--primary);">
+                            <h4 style="color:var(--primary); margin-bottom:16px; font-size:0.9rem;"><i class="fas fa-paper-plane"></i> Personal Mail</h4>
+                            <input type="text" class="form-input-pro" id="mailTargetUid" placeholder="Enter Player UID">
+                            <textarea class="form-input-pro" id="mailContent" placeholder="Type your message here..." style="height:100px; resize:none;"></textarea>
+                            <button class="btn-interact btn-primary-pro" onclick="sendPersonalMail()">Send Mail</button>
+                            <hr style="border-color:var(--border-color); margin: 16px 0;">
+                            <h4 style="color:var(--admin-color); margin-bottom:12px; font-size:0.9rem;"><i class="fas fa-trash-alt"></i> Clear Inbox</h4>
+                            <input type="text" class="form-input-pro" id="clearMailUid" placeholder="Enter UID to clear mails">
+                            <button class="btn-interact btn-danger-pro" onclick="clearUserMails()" style="width:100%; margin-top:0;">Clear Mails</button>
+                        </div>
+
+                        <!-- Player Chat Section -->
+                        <div style="padding:20px; background:rgba(0,0,0,0.3); border-radius:12px; border:1px solid var(--accent);">
+                            <h4 style="color:var(--accent); margin-bottom:16px; font-size:0.9rem;"><i class="fas fa-comments"></i> Chat with Player</h4>
+                            <input type="text" class="form-input-pro" id="adminChatUid" placeholder="Enter Player UID to chat">
+                            <button class="btn-interact btn-primary-pro" onclick="startAdminChat()" style="margin-bottom:12px;">Load Chat</button>
+                            
+                            <div id="adminChatBox" style="display:none;">
+                                <div class="admin-chat-container" id="adminChatMessages"></div>
+                                <div style="display:flex; gap:8px;">
+                                    <input type="text" class="form-input-pro" id="adminChatInput" placeholder="Type message..." style="margin-bottom:0;">
+                                    <button class="btn-interact btn-primary-pro" onclick="sendAdminChat()" style="width:auto; padding:0 16px;"><i class="fas fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="adminTabMatches" class="admin-tab-content" style="display:none;"><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px; margin-bottom:16px;"><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><input type="text" class="form-input-pro" id="matchTeamA" placeholder="Team A"><input type="text" class="form-input-pro" id="matchTeamB" placeholder="Team B"></div><div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:8px; margin-top:8px;"><input type="text" class="form-input-pro" id="matchTime" placeholder="Time"><input type="number" class="form-input-pro" id="matchScoreA" placeholder="S.A"><input type="number" class="form-input-pro" id="matchScoreB" placeholder="S.B"></div><button class="btn-interact btn-primary-pro" style="margin-top:10px;" onclick="addMatch()">Add</button></div><table class="admin-table"><thead><tr><th>Match</th><th>Score</th><th>Action</th></tr></thead><tbody id="adminMatchList"></tbody></table></div>
+                <div id="adminTabBlacklist" class="admin-tab-content" style="display:none;"><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px; margin-bottom:16px; border:1px solid var(--accent);"><input type="text" class="form-input-pro" id="blName" placeholder="Name"><input type="text" class="form-input-pro" id="blUid" placeholder="UID"><input type="text" class="form-input-pro" id="blReason" placeholder="Reason"><button class="btn-interact" style="width:100%; background:var(--accent); color:#000; padding:10px; border-radius:6px; margin-top:8px;" onclick="addBlacklist()">Ban</button></div><table class="admin-table"><thead><tr><th>Name</th><th>Reason</th><th>Action</th></tr></thead><tbody id="adminBlacklist"></tbody></table></div>
+                <div id="adminTabSystem" class="admin-tab-content" style="display:none;"><div style="display:grid; gap:16px;"><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px;"><label style="font-size:0.7rem; text-transform:uppercase;">Broadcast Message</label><input type="text" class="form-input-pro" id="broadcastText" placeholder="Enter message"><button class="btn-interact btn-primary-pro" style="margin-top:8px;" onclick="sendBroadcast()">Send</button></div><div style="padding:16px; background:rgba(0,0,0,0.3); border-radius:10px; border:1px solid var(--admin-color);"><label style="font-size:0.7rem; color:var(--admin-color); text-transform:uppercase;">Danger</label><button class="btn-interact btn-danger-pro" style="width:100%; margin-bottom:8px;" onclick="clearChat()">Clear Chat</button><button class="btn-interact btn-danger-pro" style="width:100%;" onclick="resetData()">Reset Data</button></div></div></div></div></div></div></div>
 
     <div id="toastContainer" style="position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
 
@@ -244,39 +349,35 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const storage = firebase.storage();
 
         // ===== STATE =====
         let players = []; let teams = []; let matches = []; let blacklist = []; let notifications = []; let currentUser = null; let isAdmin = false; let isEditMode = false;
+        let activeAdminChatUid = null; let currentChatMode = 'global'; // 'global' or 'admin'
         const ADMIN_PASS = "YT10M_BOSS";
 
         // ===== FUNCTIONS =====
         function calculateFFRank(actScore) {
             const score = parseInt(actScore) || 0;
-            if (score >= 4500) return { name: "GRANDMASTER", color: "#ff4444", bg: "linear-gradient(90deg, #ff4444, #ff0000)" };
-            if (score >= 4100) return { name: "HEROIC", color: "#ff00ff", bg: "linear-gradient(90deg, #ff00ff, #8a2be2)" };
-            if (score >= 3600) return { name: "DIAMOND IV", color: "#00ffff", bg: "linear-gradient(90deg, #00ffff, #00bfff)" };
-            if (score >= 3100) return { name: "PLATINUM IV", color: "#00ff88", bg: "linear-gradient(90deg, #e0e0e0, #a0a0a0)" };
-            if (score >= 2600) return { name: "GOLD IV", color: "#ffd700", bg: "linear-gradient(90deg, #ffd700, #ffb300)" };
-            if (score >= 2100) return { name: "SILVER IV", color: "#c0c0c0", bg: "linear-gradient(90deg, #c0c0c0, #808080)" };
-            return { name: "BRONZE I", color: "#cd7f32", bg: "linear-gradient(90deg, #cd7f32, #8b4513)" };
+            if (score >= 4500) return { name: "GRANDMASTER", color: "#ff4444", bg: "linear-gradient(90deg, #ff4444, #8b0000)", textColor: "#00ffff" };
+            if (score >= 4100) return { name: "HEROIC", color: "#ff00ff", bg: "linear-gradient(90deg, #ff00ff, #4b0082)", textColor: "#ffff00" };
+            if (score >= 3600) return { name: "DIAMOND IV", color: "#00ffff", bg: "linear-gradient(90deg, #00ffff, #0000ff)", textColor: "#ff0055" };
+            if (score >= 3100) return { name: "PLATINUM IV", color: "#e0e0e0", bg: "linear-gradient(90deg, #e0e0e0, #808080)", textColor: "#111111" };
+            if (score >= 2600) return { name: "GOLD IV", color: "#ffd700", bg: "linear-gradient(90deg, #ffd700, #b8860b)", textColor: "#0000aa" };
+            if (score >= 2100) return { name: "SILVER IV", color: "#c0c0c0", bg: "linear-gradient(90deg, #c0c0c0, #696969)", textColor: "#111111" };
+            return { name: "BRONZE I", color: "#cd7f32", bg: "linear-gradient(90deg, #cd7f32, #8b4513)", textColor: "#00ffff" };
         }
 
         function getRoleColor(role) {
             switch(role) {
                 case 'Assaulter': return { color: 'var(--role-assaulter)', glow: 'rgba(255, 77, 77, 0.5)' };
-                case 'Sniper': return { color: 'var(--role-sniper)', glow: 'rgba(77, 255, 136, 0.5)' };
+                case 'Sniper': return { color: 'var(--role-sniper)', glow: 'rgba(0, 255, 157, 0.5)' };
                 case 'Support': return { color: 'var(--role-support)', glow: 'rgba(77, 136, 255, 0.5)' };
                 case 'IGL': return { color: 'var(--role-igl)', glow: 'rgba(255, 215, 0, 0.5)' };
                 default: return { color: 'var(--primary)', glow: 'var(--primary-glow)' };
             }
         }
 
-        // ===== AVATAR HELPER (OLD SYSTEM - NO GENDER) =====
-        function getAvatarUrl(uid) {
-            // Uses 'adventurer-neutral' which is a cool, unique style based only on UID
-            return `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${encodeURIComponent(uid)}&backgroundColor=0d0f14`;
-        }
+        function getAvatarUrl(uid) { return `https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=${encodeURIComponent(uid)}&backgroundColor=0d0f14`; }
 
         // ===== UTILS =====
         function copyUid(uid) { navigator.clipboard.writeText(uid).then(() => showToast('Copied: ' + uid, 'success')); }
@@ -289,16 +390,16 @@
         document.addEventListener('DOMContentLoaded', () => { initParticles(); initNav(); initForms(); initInteractions(); initFirebaseListeners(); checkSession(); });
 
         // ===== PARTICLES =====
-        function initParticles() { const canvas = document.getElementById('bg-canvas'); const ctx = canvas.getContext('2d'); let particles = []; function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; init(); } class Particle { constructor() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.size = Math.random() * 2 + 0.5; this.speedX = (Math.random() - 0.5) * 0.5; this.speedY = (Math.random() - 0.5) * 0.5; this.color = Math.random() > 0.5 ? 'rgba(0, 212, 255, 0.6)' : 'rgba(255, 200, 61, 0.4)'; } update() { this.x += this.speedX; this.y += this.speedY; if (this.x > canvas.width || this.x < 0) this.speedX *= -1; if (this.y > canvas.height || this.y < 0) this.speedY *= -1; } draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); } } function init() { particles = []; const num = (canvas.width * canvas.height) / 12000; for (let i = 0; i < num; i++) { particles.push(new Particle()); } } function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } requestAnimationFrame(animate); } resize(); animate(); window.addEventListener('resize', resize); }
+        function initParticles() { const canvas = document.getElementById('bg-canvas'); const ctx = canvas.getContext('2d'); let particles = []; function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; init(); } class Particle { constructor() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.size = Math.random() * 2 + 0.5; this.speedX = (Math.random() - 0.5) * 0.5; this.speedY = (Math.random() - 0.5) * 0.5; this.color = Math.random() > 0.5 ? 'rgba(0, 243, 255, 0.5)' : 'rgba(188, 19, 254, 0.4)'; } update() { this.x += this.speedX; this.y += this.speedY; if (this.x > canvas.width || this.x < 0) this.speedX *= -1; if (this.y > canvas.height || this.y < 0) this.speedY *= -1; } draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); } } function init() { particles = []; const num = (canvas.width * canvas.height) / 12000; for (let i = 0; i < num; i++) { particles.push(new Particle()); } } function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); for (let i = 0; i < particles.length; i++) { particles[i].update(); particles[i].draw(); } requestAnimationFrame(animate); } resize(); animate(); window.addEventListener('resize', resize); }
 
         // ===== AUTH =====
         function openAuthModal() { if (currentUser) { if (confirm('Logout?')) logout(); } else { document.getElementById('authModal').style.display = 'flex'; toggleAuthForm('login'); } }
         function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
         function toggleAuthForm(type) { document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none'; document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none'; }
-        function handleLogin() { const uid = document.getElementById('loginUid').value.trim(); const pass = document.getElementById('loginPass').value; if (!uid || !pass) return showToast('Missing fields', 'error'); db.ref('players/' + uid).once('value').then(snap => { const user = snap.val(); if (user && user.password === pass) { currentUser = user; localStorage.setItem('yt_session', uid); updateUIForUser(); closeAuthModal(); showToast('Welcome ' + user.name, 'success'); if(document.getElementById('page-player-card').classList.contains('active')) preparePlayerForm(); } else showToast('Invalid', 'error'); }); }
-        function logout() { currentUser = null; localStorage.removeItem('yt_session'); document.getElementById('authBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Login'; document.getElementById('userProfileArea').style.display = 'none'; showToast('Logged out', 'success'); }
+        function handleLogin() { const uid = document.getElementById('loginUid').value.trim(); const pass = document.getElementById('loginPass').value; if (!uid || !pass) return showToast('Missing fields', 'error'); db.ref('players/' + uid).once('value').then(snap => { const user = snap.val(); if (user && user.password === pass) { currentUser = user; localStorage.setItem('yt_session', uid); updateUIForUser(); closeAuthModal(); showToast('Welcome ' + user.name, 'success'); if(document.getElementById('page-player-card').classList.contains('active')) preparePlayerForm(); loadUserMail(); } else showToast('Invalid', 'error'); }); }
+        function logout() { currentUser = null; localStorage.removeItem('yt_session'); document.getElementById('authBtn').innerHTML = '<i class="fas fa-sign-in-alt"></i> Login'; document.getElementById('userProfileArea').style.display = 'none'; document.getElementById('mailNav').style.display = 'none'; const mobileAuthBtn = document.getElementById('mobileAuthBtn'); mobileAuthBtn.innerHTML = '<i class="fas fa-user-circle"></i><span>Login</span>'; document.getElementById('mobileMailNav').style.display = 'none'; showToast('Logged out', 'success'); }
         function checkSession() { const uid = localStorage.getItem('yt_session'); if (uid) db.ref('players/' + uid).once('value').then(snap => { if (snap.exists()) { currentUser = snap.val(); updateUIForUser(); } }); }
-        function updateUIForUser() { if (currentUser) { document.getElementById('authBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout'; document.getElementById('navAvatar').src = getAvatarUrl(currentUser.uid); document.getElementById('userProfileArea').style.display = 'flex'; } }
+        function updateUIForUser() { if (currentUser) { document.getElementById('authBtn').innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout'; document.getElementById('navAvatar').src = getAvatarUrl(currentUser.uid); document.getElementById('userProfileArea').style.display = 'flex'; document.getElementById('mailNav').style.display = 'flex'; const mobileAuthBtn = document.getElementById('mobileAuthBtn'); mobileAuthBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i><span>Logout</span>'; document.getElementById('mobileMailNav').style.display = 'flex'; loadUserMail(); } }
 
         // ===== ADMIN =====
         document.getElementById('adminBtn').onclick = () => document.getElementById('adminModal').style.display = 'flex';
@@ -306,155 +407,137 @@
         function adminLogin() { if (document.getElementById('adminPassInput').value === ADMIN_PASS) { isAdmin = true; document.getElementById('adminLoginSection').style.display = 'none'; document.getElementById('adminControlSection').style.display = 'block'; updateAdminData(); showToast('Admin Mode', 'success'); } else showToast('Wrong', 'error'); }
         function switchAdminTab(tab) { document.querySelectorAll('.admin-tab-btn').forEach(b => { b.style.background = 'transparent'; b.style.color = 'var(--text-muted)'; }); document.querySelector(`[data-tab="${tab}"]`).style.background = 'var(--admin-color)'; document.querySelector(`[data-tab="${tab}"]`).style.color = 'white'; document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none'); document.getElementById('adminTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block'; }
         
-        function updateAdminData() { 
-            document.getElementById('adminUserList').innerHTML = players.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No players</td></tr>' : players.map(p => { const rankInfo = calculateFFRank(p.act); return `<tr><td>${p.name}</td><td style="color:var(--primary)">${p.uid}</td><td style="color:${rankInfo.color}; font-weight:700;">${rankInfo.name}</td><td><button class="btn-danger-pro" style="padding:4px 8px; font-size:0.7rem" onclick="deleteUser('${p.id}')">X</button></td></tr>`; }).join(''); 
-            document.getElementById('attendancePlayer').innerHTML = '<option value="">Select</option>' + players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            document.getElementById('adminMatchList').innerHTML = matches.length === 0 ? '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No matches</td></tr>' : matches.map(m => `<tr><td>${m.teamA} vs ${m.teamB}</td><td>${m.scoreA || 0} - ${m.scoreB || 0}</td><td><button class="btn-danger-pro" style="padding:4px 8px" onclick="deleteMatch('${m.id}')">X</button></td></tr>`).join('');
-            document.getElementById('adminBlacklist').innerHTML = blacklist.length === 0 ? '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Empty</td></tr>' : blacklist.map(b => `<tr><td>${b.name}</td><td>${b.reason}</td><td><button class="btn-primary-pro" style="padding:4px 8px" onclick="removeBlacklist('${b.id}')"><i class="fas fa-undo"></i></button></td></tr>`).join('');
+        // Admin Mail & Chat Functions
+        function sendPersonalMail() { let targetUid = document.getElementById('mailTargetUid').value.trim().replace(/[.#$\[\]]/g, '_'); const content = document.getElementById('mailContent').value.trim(); if(!targetUid || !content) return showToast('UID and Message required', 'error'); db.ref('players/' + targetUid).once('value', snap => { if(!snap.exists()) return showToast('Player UID not found', 'error'); db.ref('mails/' + targetUid).push({ from: 'Admin', text: content, time: Date.now(), read: false }).then(() => { showToast('Mail sent to ' + targetUid, 'success'); document.getElementById('mailContent').value = ''; }).catch(err => showToast(err.message, 'error')); }); }
+        function clearUserMails() { let rawUid = document.getElementById('clearMailUid').value.trim(); if(!rawUid) return showToast('Enter Player UID', 'error'); let targetUid = rawUid.replace(/[.#$\[\]]/g, '_'); db.ref('mails/' + targetUid).once('value').then(snap => { if(!snap.exists()) return showToast('No mails found for UID: ' + targetUid, 'error'); if(confirm(`DELETE ALL MAILS for ${targetUid}?`)) { db.ref('mails/' + targetUid).remove().then(() => { showToast('Inbox Cleared', 'success'); document.getElementById('clearMailUid').value = ''; }).catch(err => showToast(err.message, 'error')); } }); }
+
+        function startAdminChat() {
+            let targetUid = document.getElementById('adminChatUid').value.trim().replace(/[.#$\[\]]/g, '_');
+            if(!targetUid) return showToast('Enter Player UID', 'error');
+            db.ref('players/' + targetUid).once('value', snap => {
+                if(!snap.exists()) return showToast('Player not found', 'error');
+                activeAdminChatUid = targetUid;
+                document.getElementById('adminChatBox').style.display = 'block';
+                document.getElementById('adminChatMessages').innerHTML = '<div style="text-align:center; color:var(--text-muted)">Loading...</div>';
+                db.ref('admin_chats/' + targetUid).off(); 
+                db.ref('admin_chats/' + targetUid).on('value', chatSnap => { renderAdminChat(chatSnap.val()); });
+            });
+        }
+        function sendAdminChat() {
+            if(!activeAdminChatUid) return;
+            const text = document.getElementById('adminChatInput').value.trim();
+            if(!text) return;
+            db.ref('admin_chats/' + activeAdminChatUid).push({ sender: 'Admin', text: text, time: Date.now() }).then(() => { document.getElementById('adminChatInput').value = ''; });
+        }
+        function renderAdminChat(data) {
+            const container = document.getElementById('adminChatMessages');
+            if(!data) { container.innerHTML = '<div style="text-align:center; color:var(--text-muted)">No messages yet.</div>'; return; }
+            const msgs = Object.values(data).sort((a,b) => a.time - b.time);
+            container.innerHTML = msgs.map(m => {
+                const isMe = m.sender === 'Admin';
+                const time = new Date(m.time).toLocaleTimeString();
+                return `<div class="admin-msg ${isMe ? 'sent' : 'received'}">${m.text}<span class="admin-msg-meta">${isMe ? 'You' : m.sender} • ${time}</span></div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Player Side Chat Logic (New)
+        function switchChatMode(mode) {
+            currentChatMode = mode;
+            document.querySelectorAll('.chat-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById('chatMessages').innerHTML = '<div style="text-align:center; color:var(--text-muted)">Loading...</div>';
+            
+            // Detach previous listeners
+            db.ref('chat').off(); 
+            if(currentUser) db.ref('admin_chats/' + currentUser.uid).off();
+
+            if(mode === 'global') {
+                document.getElementById('btnChatGlobal').classList.add('active');
+                db.ref('chat').on('value', snap => renderChat(snap.val() ? Object.values(snap.val()) : []));
+            } else {
+                if(!currentUser) {
+                    showToast('Login to chat with Admin', 'error');
+                    switchChatMode('global');
+                    return;
+                }
+                document.getElementById('btnChatAdmin').classList.add('active');
+                db.ref('admin_chats/' + currentUser.uid).on('value', snap => renderChat(snap.val() ? Object.values(snap.val()) : []));
+            }
         }
         
-        function deleteUser(id) { if (confirm('Delete?')) db.ref('players/' + id).remove().then(() => showToast('Deleted', 'success')); }
+        function sendChat() {
+            const text = document.getElementById('chatMsg').value.trim();
+            if(!text) return;
+
+            if(currentChatMode === 'global') {
+                db.ref('chat').push({ sender: currentUser ? currentUser.name : 'Guest', text, time: Date.now() });
+            } else {
+                if(!currentUser) return showToast('Login required', 'error');
+                db.ref('admin_chats/' + currentUser.uid).push({ sender: currentUser.name, text, time: Date.now() });
+            }
+            document.getElementById('chatMsg').value = '';
+        }
+
+        // Standard Render Chat Function (Used for both Global and Admin)
+        function renderChat(data) {
+            const container = document.getElementById('chatMessages');
+            if(!data || data.length === 0) { container.innerHTML = '<div style="text-align:center; color:var(--text-muted)">No messages</div>'; return; }
+            const sorted = data.sort((a,b) => a.time - b.time);
+            container.innerHTML = sorted.map(m => `<div style="margin-bottom:12px;"><strong style="color:var(--accent); font-size:0.8rem">${m.sender}</strong><div style="font-size:0.85rem; background:rgba(0, 0, 0, 0.2); padding:8px; border-radius:8px; margin-top:4px;">${m.text}</div></div>`).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function deleteMail(mailId) { if(!currentUser) return; if(confirm('Delete this mail?')) { db.ref('mails/' + currentUser.uid + '/' + mailId).remove().then(() => showToast('Mail deleted', 'success')).catch(err => showToast(err.message, 'error')); } }
+        function loadUserMail() { if(!currentUser) return; const mailRef = db.ref('mails/' + currentUser.uid); mailRef.on('value', snap => { const data = snap.val(); const container = document.getElementById('mailListContainer'); const notifDot = document.getElementById('mailNotifDot'); if(!data) { container.innerHTML = '<div style="text-align:center; color:var(--text-muted)">Inbox is empty</div>'; notifDot.style.display = 'none'; return; } const mails = Object.entries(data).map(([key, val]) => ({id: key, ...val})).sort((a,b) => b.time - a.time); const hasUnread = mails.some(m => !m.read); notifDot.style.display = hasUnread ? 'block' : 'none'; container.innerHTML = mails.map(m => { const date = new Date(m.time).toLocaleString(); return `<div class="mail-item ${m.read ? 'read' : ''}"><button class="mail-delete-btn" onclick="deleteMail('${m.id}')"><i class="fas fa-trash"></i></button><div style="display:flex; justify-content:space-between; margin-bottom:8px; padding-right: 20px;"><strong style="color:var(--accent)">${m.from}</strong><span style="font-size:0.7rem; color:var(--text-muted)">${date}</span></div><p style="font-size:0.9rem; line-height:1.5;">${m.text}</p></div>`; }).join(''); }); }
+
+        function updateAdminData() { document.getElementById('adminUserList').innerHTML = players.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No players</td></tr>' : players.map(p => { const rankInfo = calculateFFRank(p.act); return `<tr><td>${p.name}</td><td style="color:var(--accent)">${p.uid}</td><td style="color:${rankInfo.color}; font-weight:700;">${rankInfo.name}</td><td><button class="btn-danger-pro" style="padding:4px 8px; font-size:0.7rem" onclick="deleteUser('${p.id}')">X</button></td></tr>`; }).join(''); document.getElementById('attendancePlayer').innerHTML = '<option value="">Select</option>' + players.map(p => `<option value="${p.id}">${p.name}</option>`).join(''); document.getElementById('adminMatchList').innerHTML = matches.length === 0 ? '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No matches</td></tr>' : matches.map(m => `<tr><td>${m.teamA} vs ${m.teamB}</td><td>${m.scoreA || 0} - ${m.scoreB || 0}</td><td><button class="btn-danger-pro" style="padding:4px 8px" onclick="deleteMatch('${m.id}')">X</button></td></tr>`).join(''); document.getElementById('adminBlacklist').innerHTML = blacklist.length === 0 ? '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Empty</td></tr>' : blacklist.map(b => `<tr><td>${b.name}</td><td>${b.reason}</td><td><button class="btn-primary-pro" style="padding:4px 8px" onclick="removeBlacklist('${b.id}')"><i class="fas fa-undo"></i></button></td></tr>`).join(''); }
+        function deleteUser(id) { if (confirm('Delete this player and all their data?')) { db.ref('players/' + id).remove().then(() => { return Promise.all([db.ref('mails/' + id).remove(), db.ref('admin_chats/' + id).remove()]); }).then(() => showToast('Player Deleted', 'success')).catch(err => showToast(err.message, 'error')); } }
         function addMatch() { const teamA = document.getElementById('matchTeamA').value.trim(); const teamB = document.getElementById('matchTeamB').value.trim(); const time = document.getElementById('matchTime').value.trim(); const scoreA = parseInt(document.getElementById('matchScoreA').value) || 0; const scoreB = parseInt(document.getElementById('matchScoreB').value) || 0; if (!teamA || !teamB) return; const id = Date.now().toString(); db.ref('matches/' + id).set({ id, teamA, teamB, time, scoreA, scoreB }).then(() => showToast('Added', 'success')); }
         function deleteMatch(id) { db.ref('matches/' + id).remove(); }
         function addBlacklist() { const name = document.getElementById('blName').value.trim(); const uid = document.getElementById('blUid').value.trim(); const reason = document.getElementById('blReason').value.trim(); if (!name || !uid) return; db.ref('blacklist/' + Date.now()).set({ id: Date.now().toString(), name, uid, reason: reason || 'N/A' }).then(() => showToast('Banned', 'success')); }
         function removeBlacklist(id) { db.ref('blacklist/' + id).remove(); }
-        function clearChat() { if (confirm('Clear?')) db.ref('chat').remove(); }
-        function resetData() { if (confirm('RESET ALL?')) { db.ref('players').remove(); db.ref('teams').remove(); db.ref('chat').remove(); db.ref('matches').remove(); db.ref('screenshots').remove(); db.ref('blacklist').remove(); } }
+        function clearChat() { if (confirm('Clear Global Chat?')) db.ref('chat').remove(); }
+        function resetData() { if (confirm('RESET ALL?')) { db.ref('players').remove(); db.ref('teams').remove(); db.ref('chat').remove(); db.ref('matches').remove(); db.ref('blacklist').remove(); db.ref('mails').remove(); db.ref('admin_chats').remove(); } }
         function sendBroadcast() { const text = document.getElementById('broadcastText').value.trim(); if (!text) return; db.ref('notifications').push({ text, time: Date.now() }).then(() => { showToast('Broadcast Sent', 'success'); document.getElementById('broadcastText').value = ''; }); }
 
         // ===== FORM HANDLING =====
-        function preparePlayerForm() { 
-            if (currentUser) { 
-                isEditMode = true; document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-edit"></i> Edit'; document.getElementById('registerBtn').textContent = 'Update'; 
-                document.getElementById('playerName').value = currentUser.name; document.getElementById('playerUid').value = currentUser.uid; document.getElementById('playerUid').disabled = true; 
-                document.getElementById('playerKd').value = currentUser.kd; document.getElementById('playerAct').value = currentUser.act; document.getElementById('playerHs').value = currentUser.hs; 
-                document.getElementById('playerRole').value = currentUser.role; document.getElementById('playerPass').required = false; document.getElementById('playerPass').placeholder = 'Leave blank'; 
-                updateLivePreview(); 
-            }
-            else { 
-                isEditMode = false; document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-plus"></i> Create'; document.getElementById('registerBtn').textContent = 'Save'; 
-                document.getElementById('playerForm').reset(); document.getElementById('playerUid').disabled = false; document.getElementById('playerPass').required = true; 
-                updateLivePreview();
-            } 
-        }
+        function preparePlayerForm() { if (currentUser) { isEditMode = true; document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-edit"></i> Edit'; document.getElementById('registerBtn').textContent = 'Update'; document.getElementById('playerName').value = currentUser.name; document.getElementById('playerUid').value = currentUser.uid; document.getElementById('playerUid').disabled = true; document.getElementById('playerKd').value = currentUser.kd; document.getElementById('playerAct').value = currentUser.act; document.getElementById('playerHs').value = currentUser.hs; document.getElementById('playerRole').value = currentUser.role; document.getElementById('playerPass').required = false; document.getElementById('playerPass').placeholder = 'Leave blank'; updateLivePreview(); } else { isEditMode = false; document.getElementById('formTitle').innerHTML = '<i class="fas fa-user-plus"></i> Create'; document.getElementById('registerBtn').textContent = 'Save'; document.getElementById('playerForm').reset(); document.getElementById('playerUid').disabled = false; document.getElementById('playerPass').required = true; updateLivePreview(); } }
+        function initForms() { ['playerName', 'playerUid', 'playerKd', 'playerAct', 'playerHs', 'playerRole'].forEach(id => { document.getElementById(id).addEventListener('input', updateLivePreview); }); document.getElementById('playerForm').onsubmit = (e) => { e.preventDefault(); const name = document.getElementById('playerName').value.trim(); const pass = document.getElementById('playerPass').value; const kd = parseFloat(document.getElementById('playerKd').value) || 0; const act = parseInt(document.getElementById('playerAct').value) || 0; const hs = parseInt(document.getElementById('playerHs').value) || 0; const role = document.getElementById('playerRole').value; const btn = document.getElementById('registerBtn'); btn.innerHTML = '...'; btn.disabled = true; if (isEditMode && currentUser) { db.ref('players/' + currentUser.uid).update({ name, kd, act, hs, role }).then(() => { showToast('Updated', 'success'); currentUser = {...currentUser, name, kd, act, hs, role}; updateUIForUser(); }).finally(() => { btn.innerHTML = 'Update'; btn.disabled = false; }); } else { const uid = document.getElementById('playerUid').value.trim().replace(/[.#$\[\]]/g, '_'); if (!uid) return showToast('Invalid UID', 'error'); db.ref('players/' + uid).once('value').then(snap => { if (snap.exists()) return showToast('UID exists', 'error'); const data = { id: uid, uid, name, password: pass, kd, act, hs, role, createdAt: Date.now() }; db.ref('players/' + uid).set(data).then(() => { showToast('Registered!', 'success'); currentUser = data; localStorage.setItem('yt_session', uid); updateUIForUser(); preparePlayerForm(); }).catch(err => showToast(err.message, 'error')); }).finally(() => { btn.innerHTML = 'Save'; btn.disabled = false; }); } }; document.getElementById('tournamentForm').onsubmit = (e) => { e.preventDefault(); if (teams.length >= 24) return showToast('Full', 'error'); const team = { slot: teams.length + 1, name: document.getElementById('teamName').value.trim(), players: [ document.getElementById('uid1').value.trim(), document.getElementById('uid2').value.trim(), document.getElementById('uid3').value.trim(), document.getElementById('uid4').value.trim() ] }; db.ref('teams').push(team).then(() => { document.getElementById('tournamentForm').reset(); showToast('Registered', 'success'); }); }; document.getElementById('checkInBtn').onclick = () => { const pid = document.getElementById('attendancePlayer').value; if (!pid) return; const today = new Date().toISOString().split('T')[0]; db.ref('attendance/' + today).once('value').then(snap => { let list = snap.val() || []; if (list.includes(pid)) return showToast('Already checked', 'error'); list.push(pid); return db.ref('attendance/' + today).set(list); }).then(() => showToast('Checked In', 'success')); };
         
-        function initForms() { 
-            ['playerName', 'playerUid', 'playerKd', 'playerAct', 'playerHs', 'playerRole'].forEach(id => { document.getElementById(id).addEventListener('input', updateLivePreview); });
-            
-            document.getElementById('playerForm').onsubmit = (e) => { 
-                e.preventDefault(); 
-                const name = document.getElementById('playerName').value.trim(); 
-                const pass = document.getElementById('playerPass').value; 
-                const kd = parseFloat(document.getElementById('playerKd').value) || 0; 
-                const act = parseInt(document.getElementById('playerAct').value) || 0; 
-                const hs = parseInt(document.getElementById('playerHs').value) || 0; 
-                const role = document.getElementById('playerRole').value; 
-                const btn = document.getElementById('registerBtn'); btn.innerHTML = '...'; btn.disabled = true; 
-                
-                if (isEditMode && currentUser) { 
-                    db.ref('players/' + currentUser.uid).update({ name, kd, act, hs, role }).then(() => { showToast('Updated', 'success'); currentUser = {...currentUser, name, kd, act, hs, role}; updateUIForUser(); }).finally(() => { btn.innerHTML = 'Update'; btn.disabled = false; }); 
-                }
-                else { 
-                    const uid = document.getElementById('playerUid').value.trim().replace(/[.#$\[\]]/g, '_'); 
-                    if (!uid) return showToast('Invalid UID', 'error'); 
-                    db.ref('players/' + uid).once('value').then(snap => { 
-                        if (snap.exists()) return showToast('UID exists', 'error'); 
-                        const data = { id: uid, uid, name, password: pass, kd, act, hs, role, createdAt: Date.now() }; 
-                        db.ref('players/' + uid).set(data).then(() => { showToast('Registered!', 'success'); currentUser = data; localStorage.setItem('yt_session', uid); updateUIForUser(); preparePlayerForm(); }).catch(err => showToast(err.message, 'error')); 
-                    }).finally(() => { btn.innerHTML = 'Save'; btn.disabled = false; }); 
-                }
-            };
-            
-            document.getElementById('tournamentForm').onsubmit = (e) => { e.preventDefault(); if (teams.length >= 24) return showToast('Full', 'error'); const team = { slot: teams.length + 1, name: document.getElementById('teamName').value.trim(), players: [ document.getElementById('uid1').value.trim(), document.getElementById('uid2').value.trim(), document.getElementById('uid3').value.trim(), document.getElementById('uid4').value.trim() ] }; db.ref('teams').push(team).then(() => { document.getElementById('tournamentForm').reset(); showToast('Registered', 'success'); }); };
-            document.getElementById('checkInBtn').onclick = () => { const pid = document.getElementById('attendancePlayer').value; if (!pid) return; const today = new Date().toISOString().split('T')[0]; db.ref('attendance/' + today).once('value').then(snap => { let list = snap.val() || []; if (list.includes(pid)) return showToast('Already checked', 'error'); list.push(pid); return db.ref('attendance/' + today).set(list); }).then(() => showToast('Checked In', 'success')); };
-            document.getElementById('sendChatBtn').onclick = () => { const text = document.getElementById('chatMsg').value.trim(); if (!text) return; db.ref('chat').push({ sender: currentUser ? currentUser.name : 'Guest', text, time: Date.now() }); document.getElementById('chatMsg').value = ''; };
-            const uploadArea = document.getElementById('fileUpload'); const screenshotInput = document.getElementById('screenshotInput'); uploadArea.onclick = () => screenshotInput.click(); screenshotInput.onchange = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0]); };
-        }
-        
-        function updateLivePreview() {
-            const name = document.getElementById('playerName').value || 'NAME';
-            const act = document.getElementById('playerAct').value || 0;
-            const role = document.getElementById('playerRole').value;
-            const uid = document.getElementById('playerUid').value || 'NewPlayer';
-            
-            const rankInfo = calculateFFRank(act);
-            const roleInfo = getRoleColor(role);
-            const avatarUrl = getAvatarUrl(uid);
-            
-            document.getElementById('avatarPreviewImg').src = avatarUrl;
-            document.getElementById('cardAvatar').innerHTML = `<img src="${avatarUrl}">`;
-            document.getElementById('cardName').textContent = name;
-            document.getElementById('cardKd').textContent = (parseFloat(document.getElementById('playerKd').value) || 0).toFixed(2);
-            document.getElementById('cardAct').textContent = act;
-            document.getElementById('cardHs').textContent = (document.getElementById('playerHs').value || '0') + '%';
-            
-            const rankBadge = document.getElementById('cardRank');
-            rankBadge.textContent = rankInfo.name;
-            rankBadge.style.background = rankInfo.bg;
-            rankBadge.style.color = (rankInfo.name === 'PLATINUM IV') ? '#333' : '#000';
-            
-            const roleElem = document.getElementById('cardRole');
-            roleElem.textContent = role;
-            roleElem.style.color = roleInfo.color;
-            roleElem.style.textShadow = `0 0 10px ${roleInfo.glow}`;
-            
-            const playerCard = document.getElementById('playerCardPreview');
-            const cardAvatarCont = document.getElementById('cardAvatar');
-            playerCard.style.setProperty('--card-color', roleInfo.color);
-            playerCard.style.setProperty('--card-glow', roleInfo.glow);
-            cardAvatarCont.style.borderColor = roleInfo.color;
-            cardAvatarCont.style.boxShadow = `0 0 20px ${roleInfo.glow}`;
-            document.getElementById('cardUid').textContent = uid;
-        }
+        // Chat Listeners
+        document.getElementById('sendChatBtn').onclick = sendChat;
+        document.getElementById('btnChatGlobal').onclick = () => switchChatMode('global');
+        document.getElementById('btnChatAdmin').onclick = () => switchChatMode('admin');
+        // Enter key support for chat
+        document.getElementById('chatMsg').addEventListener("keyup", function(event) { if (event.key === "Enter") sendChat(); });
 
+        }
+        function updateLivePreview() { const name = document.getElementById('playerName').value || 'NAME'; const act = document.getElementById('playerAct').value || 0; const role = document.getElementById('playerRole').value; const uid = document.getElementById('playerUid').value || 'NewPlayer'; const rankInfo = calculateFFRank(act); const roleInfo = getRoleColor(role); const avatarUrl = getAvatarUrl(uid); document.getElementById('avatarPreviewImg').src = avatarUrl; document.getElementById('cardAvatar').innerHTML = `<img src="${avatarUrl}">`; document.getElementById('cardName').textContent = name; document.getElementById('cardKd').textContent = (parseFloat(document.getElementById('playerKd').value) || 0).toFixed(2); document.getElementById('cardAct').textContent = act; document.getElementById('cardHs').textContent = (document.getElementById('playerHs').value || '0') + '%'; const rankBadge = document.getElementById('cardRank'); rankBadge.textContent = rankInfo.name; rankBadge.style.background = rankInfo.bg; rankBadge.style.color = rankInfo.textColor; rankBadge.style.textShadow = `0 0 5px ${rankInfo.textColor}`; const roleElem = document.getElementById('cardRole'); roleElem.textContent = role; roleElem.style.color = roleInfo.color; roleElem.style.textShadow = `0 0 10px ${roleInfo.glow}`; const playerCard = document.getElementById('playerCardPreview'); const cardAvatarCont = document.getElementById('cardAvatar'); playerCard.style.setProperty('--card-color', roleInfo.color); playerCard.style.setProperty('--card-glow', roleInfo.glow); cardAvatarCont.style.borderColor = roleInfo.color; cardAvatarCont.style.boxShadow = `0 0 20px ${roleInfo.glow}`; document.getElementById('cardUid').textContent = uid; }
         function downloadCard() { const card = document.getElementById('playerCardPreview'); html2canvas(card, { backgroundColor: null, scale: 2 }).then(canvas => { const link = document.createElement('a'); link.download = 'Card.png'; link.href = canvas.toDataURL(); link.click(); }); }
-        function uploadFile(file) { const ref = storage.ref('glory/' + Date.now()); ref.put(file).then(() => ref.getDownloadURL()).then(url => db.ref('screenshots').push({ url })).then(() => showToast('Uploaded', 'success')); }
 
         // ===== LISTENERS =====
-        function initFirebaseListeners() { 
-            db.ref('players').on('value', snap => { players = snap.val() ? Object.values(snap.val()) : []; updateDashboard(); updatePlayerList(); updateAdminData(); }); 
-            db.ref('teams').on('value', snap => { teams = snap.val() ? Object.values(snap.val()) : []; updateSlots(); updateTeamList(); }); 
-            db.ref('matches').on('value', snap => { matches = snap.val() ? Object.values(snap.val()) : []; updateMatchesPage(); updateDashboard(); updateAdminData(); }); 
-            db.ref('blacklist').on('value', snap => { blacklist = snap.val() ? Object.values(snap.val()) : []; updateAdminData(); }); 
-            db.ref('attendance').on('value', snap => { generateAttendanceGrid(snap.val() || {}); }); 
-            db.ref('screenshots').on('value', snap => { updateGallery(snap.val() ? Object.values(snap.val()) : []); }); 
-            db.ref('chat').on('value', snap => { renderChat(snap.val() ? Object.values(snap.val()) : []); }); 
+        function initFirebaseListeners() { db.ref('players').on('value', snap => { players = snap.val() ? Object.values(snap.val()) : []; updateDashboard(); updatePlayerList(); updateAdminData(); }); db.ref('teams').on('value', snap => { teams = snap.val() ? Object.values(snap.val()) : []; updateSlots(); updateTeamList(); }); db.ref('matches').on('value', snap => { matches = snap.val() ? Object.values(snap.val()) : []; updateMatchesPage(); updateDashboard(); updateAdminData(); }); db.ref('blacklist').on('value', snap => { blacklist = snap.val() ? Object.values(snap.val()) : []; updateAdminData(); }); db.ref('attendance').on('value', snap => { generateAttendanceGrid(snap.val() || {}); }); 
+            // Initial Global Chat Load
+            db.ref('chat').on('value', snap => { 
+                if(currentChatMode === 'global') renderChat(snap.val() ? Object.values(snap.val()) : []); 
+            });
             db.ref('notifications').on('value', snap => { const data = snap.val(); notifications = data ? Object.values(data) : []; cleanOldNotifications(data); updateNotifications(); });
         }
 
         // ===== RENDER UI =====
         function updateDashboard() { document.getElementById('statPlayers').textContent = players.length; document.getElementById('statMatches').textContent = matches.length; document.getElementById('statTeams').textContent = teams.length; }
-        function updateMatchesPage() { document.getElementById('matchesListContainer').innerHTML = matches.map(m => `<div style="border:1px solid var(--border-color); padding:16px; margin-bottom:12px; border-radius:10px; text-align:center;">${m.teamA} <strong style="color:var(--primary)">${m.scoreA || 0} - ${m.scoreB || 0}</strong> ${m.teamB}</div>`).join('') || '<div style="text-align:center; padding:20px; color:var(--text-muted)">None</div>'; }
-        
-        function updatePlayerList() { 
-            document.getElementById('playerListContainer').innerHTML = players.map(p => {
-                const rankInfo = calculateFFRank(p.act);
-                const roleInfo = getRoleColor(p.role);
-                return `<div class="member-item"><div style="display:flex; align-items:center; gap:12px;"><img src="${getAvatarUrl(p.uid)}" class="member-avatar"><div><h4 style="font-size:0.9rem">${p.name} <span style="font-size:0.65rem; color:${rankInfo.color}; background:${rankInfo.bg}; padding:2px 6px; border-radius:4px; margin-left:4px;">${rankInfo.name}</span></h4><div style="display:flex; gap:8px; align-items:center;"><div class="uid-copy-box" onclick="copyUid('${p.uid}')"><span class="uid-text">${p.uid}</span></div><span style="color:${roleInfo.color}; font-size:0.7rem; font-weight:700;">${p.role}</span></div></div></div><div style="font-weight:700; color:var(--primary)">${p.kd ? p.kd.toFixed(2) : 0}</div></div>`;
-            }).join('') || '<div style="padding:20px; text-align:center; color:var(--text-muted)">None</div>'; 
-        }
-        
+        function updateMatchesPage() { document.getElementById('matchesListContainer').innerHTML = matches.map(m => `<div style="border:1px solid var(--border-color); padding:16px; margin-bottom:12px; border-radius:10px; text-align:center;">${m.teamA} <strong style="color:var(--accent)">${m.scoreA || 0} - ${m.scoreB || 0}</strong> ${m.teamB}</div>`).join('') || '<div style="text-align:center; padding:20px; color:var(--text-muted)">None</div>'; }
+        function updatePlayerList() { document.getElementById('playerListContainer').innerHTML = players.map(p => { const rankInfo = calculateFFRank(p.act); const roleInfo = getRoleColor(p.role); return `<div class="member-item"><div style="display:flex; align-items:center; gap:12px;"><img src="${getAvatarUrl(p.uid)}" class="member-avatar"><div><h4 style="font-size:0.9rem">${p.name} <span style="font-size:0.65rem; color:${rankInfo.textColor}; background:${rankInfo.bg}; padding:2px 6px; border-radius:4px; margin-left:4px; border:1px solid rgba(255,255,255,0.1);">${rankInfo.name}</span></h4><div style="display:flex; gap:8px; align-items:center;"><div class="uid-copy-box" onclick="copyUid('${p.uid}')"><span class="uid-text">${p.uid}</span></div><span style="color:${roleInfo.color}; font-size:0.7rem; font-weight:700;">${p.role}</span></div></div></div><div style="font-weight:700; color:var(--primary)">${p.kd ? p.kd.toFixed(2) : 0}</div></div>`; }).join('') || '<div style="padding:20px; text-align:center; color:var(--text-muted)">None</div>'; }
         function updateTeamList() { document.getElementById('teamListContainer').innerHTML = teams.map(t => `<div class="card-pro" style="padding:16px"><h4 style="color:var(--accent); margin-bottom:8px">${t.name}</h4><div style="font-size:0.8rem; color:var(--text-muted)">${t.players.map(u => `<div><i class="fas fa-user" style="margin-right:6px; color:var(--primary)"></i>${u}</div>`).join('')}</div></div>`).join('') || '<div style="color:var(--text-muted)">None</div>'; }
-        function updateSlots() { let html = ''; for (let i = 1; i <= 24; i++) { const t = teams.find(x => x.slot === i); html += `<div style="padding:10px; text-align:center; border-radius:8px; border:1px solid ${t ? 'var(--primary)' : 'var(--border-color)'}; background:${t ? 'rgba(0,212,255,0.1)' : 'transparent'};"><div style="font-size:0.7rem; color:var(--text-muted)">Slot ${i}</div><div style="font-weight:600; font-size:0.8rem">${t ? t.name : 'Empty'}</div></div>`; } document.getElementById('slotsGrid').innerHTML = html; document.getElementById('slotsFilled').textContent = teams.length; }
+        function updateSlots() { let html = ''; for (let i = 1; i <= 24; i++) { const t = teams.find(x => x.slot === i); html += `<div style="padding:10px; text-align:center; border-radius:8px; border:1px solid ${t ? 'var(--primary)' : 'var(--border-color)'}; background:${t ? 'rgba(0, 243, 255, 0.1)' : 'transparent'};"><div style="font-size:0.7rem; color:var(--text-muted)">Slot ${i}</div><div style="font-weight:600; font-size:0.8rem">${t ? t.name : 'Empty'}</div></div>`; } document.getElementById('slotsGrid').innerHTML = html; document.getElementById('slotsFilled').textContent = teams.length; }
         function generateAttendanceGrid(data) { const now = new Date(); let html = ''; for (let i = 1; i <= 30; i++) { const d = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`; const checked = data[d] && data[d].length > 0; html += `<div style="padding:8px; text-align:center; border-radius:6px; border:1px solid ${checked ? 'var(--success)' : 'var(--border-color)'}; color:${checked ? 'var(--success)' : 'var(--text-muted)'}; font-size:0.7rem">${i}</div>`; } document.getElementById('attendanceGrid').innerHTML = html; }
-        function renderChat(data) { document.getElementById('chatMessages').innerHTML = (data || []).sort((a,b) => a.time - b.time).map(m => `<div style="margin-bottom:12px;"><strong style="color:var(--primary); font-size:0.8rem">${m.sender}</strong><div style="font-size:0.85rem; background:rgba(0, 0, 0, 0.2); padding:8px; border-radius:8px; margin-top:4px;">${m.text}</div></div>`).join('') || '<div style="text-align:center; color:var(--text-muted)">No chat</div>'; }
-        function updateGallery(data) { document.getElementById('screenshotGallery').innerHTML = (data || []).map(s => `<div style="position:relative"><img src="${s.url}" style="width:100%; border-radius:6px"><button class="btn-danger-pro" style="position:absolute; top:4px; right:4px; padding:2px 6px; font-size:0.7rem" onclick="db.ref('screenshots/'+${s.id}).remove()">X</button></div>`).join('') || '<div style="color:var(--text-muted)">Empty</div>'; }
-
         function cleanOldNotifications(data) { if (!data) return; const now = Date.now(); const oneDay = 24 * 60 * 60 * 1000; Object.keys(data).forEach(key => { const notif = data[key]; if (notif.time && (now - notif.time > oneDay)) { db.ref('notifications/' + key).remove(); } }); }
         function updateNotifications() { const dot = document.getElementById('notifDot'); const list = document.getElementById('notifList'); const now = Date.now(); const oneDay = 24 * 60 * 60 * 1000; const freshNotifs = notifications.filter(n => (now - n.time) < oneDay); if(freshNotifs.length > 0) { dot.style.display = 'block'; const sorted = [...freshNotifs].sort((a,b) => b.time - a.time); list.innerHTML = sorted.map(n => `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">${n.text}</div>`).join(''); } else { dot.style.display = 'none'; list.innerHTML = '<div style="color:var(--text-muted); font-size:0.8rem;">No notifications</div>'; } }
 
         // ===== NAVIGATION =====
-        function initNav() { 
-            const items = document.querySelectorAll('.nav-item'); const pages = document.querySelectorAll('.page'); 
-            items.forEach(item => { item.addEventListener('click', () => { 
-                items.forEach(i => i.classList.remove('active')); item.classList.add('active'); 
-                pages.forEach(p => p.classList.remove('active')); 
-                document.getElementById(`page-${item.dataset.page}`).classList.add('active'); 
-                document.getElementById('pageTitle').textContent = item.textContent.trim().toUpperCase(); 
-                if(item.dataset.page === 'player-card') preparePlayerForm(); 
-                if (window.innerWidth <= 768) toggleMobileSidebar(); 
-            }); }); 
-        }
+        function initNav() { const items = document.querySelectorAll('.sidebar .nav-item'); const pages = document.querySelectorAll('.page'); items.forEach(item => { item.addEventListener('click', () => { navigateTo(item, pages); }); }); const mobileItems = document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item'); mobileItems.forEach(item => { item.addEventListener('click', () => { if(item.hasAttribute('data-page')) { navigateTo(item, pages); } }); }); }
+        function navigateTo(item, pages) { document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(i => i.classList.remove('active')); document.querySelectorAll(`[data-page="${item.dataset.page}"]`).forEach(i => i.classList.add('active')); pages.forEach(p => p.classList.remove('active')); document.getElementById(`page-${item.dataset.page}`).classList.add('active'); document.getElementById('pageTitle').textContent = item.textContent.trim().toUpperCase(); if(item.dataset.page === 'player-card') preparePlayerForm(); if(item.dataset.page === 'chat') switchChatMode('global'); // Reset chat to global on nav
+        if (window.innerWidth <= 768) toggleMobileSidebar(); }
         function showToast(msg, type) { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = 'toast'; t.style.borderLeftColor = type === 'success' ? 'var(--success)' : 'var(--admin-color)'; t.innerHTML = `<span style="color:${type === 'success' ? 'var(--success)' : 'var(--admin-color)'}; margin-right:8px"><i class="fas ${type === 'success' ? 'fa-check' : 'fa-times'}"></i></span> ${msg}`; c.appendChild(t); setTimeout(() => t.remove(), 3000); }
         function initInteractions() { document.querySelectorAll('.btn-interact').forEach(btn => btn.addEventListener('click', createRipple)); }
         function createRipple(e) { const btn = e.currentTarget; const circle = document.createElement("span"); const diameter = Math.max(btn.clientWidth, btn.clientHeight); circle.style.width = circle.style.height = `${diameter}px`; circle.style.left = `${e.clientX - btn.getBoundingClientRect().left - diameter/2}px`; circle.style.top = `${e.clientY - btn.getBoundingClientRect().top - diameter/2}px`; circle.classList.add("ripple"); const r = btn.querySelector(".ripple"); if (r) r.remove(); btn.appendChild(circle); setTimeout(() => circle.remove(), 600); }
